@@ -2,9 +2,10 @@
 
 
 import math
+import secrets
 import sys
 
-from numpy.random import laplace
+from diffprivlib.mechanisms import Geometric
 
 
 def misra_gries(k, stream):
@@ -32,11 +33,16 @@ def misra_gries(k, stream):
 
 def private_misra_gries(sketch, epsilon, delta):
     private_sketch = {}
-    eta = laplace(0, 1 / epsilon)
+    threshold = 1 + 2 * math.ceil(
+        math.log(6 * math.exp(epsilon) / ((math.exp(epsilon) + 1) * delta))
+        / epsilon)
+    geometric = Geometric(epsilon=epsilon,
+                          random_state=secrets.SystemRandom())
+    eta = geometric.randomise(0)
 
     for key in sketch:
-        counter = sketch[key] + eta + laplace(0, 1 / epsilon)
-        if counter >= 1 + 2 * math.log(3 / delta) / epsilon:
+        counter = sketch[key] + eta + geometric.randomise(0)
+        if counter >= threshold:
             private_sketch[key] = counter
 
     return private_sketch
