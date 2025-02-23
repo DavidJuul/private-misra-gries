@@ -40,7 +40,7 @@ def private_misra_gries(sketch, epsilon, delta):
                           random_state=secrets.SystemRandom())
     eta = geometric.randomise(0)
 
-    for key in sketch:
+    for key in sorted(sketch):
         counter = sketch[key] + eta + geometric.randomise(0)
         if counter >= threshold:
             private_sketch[key] = counter
