@@ -17,8 +17,11 @@ def misra_gries(k, stream):
     for key in stream:
         if key in sketch:
             element = sketch[key]
-            if len(element.group.elements) == 1:
+            if len(element.group.elements) == 1 and (not element.group.next
+                                                     or element.group.next.count_diff > 1):
                 element.group.count_diff += 1
+                if element.group.next:
+                    element.group.next.count_diff -= 1
             else:
                 element.group.elements.remove(key)
                 if len(element.group.elements) == 0:
@@ -27,6 +30,8 @@ def misra_gries(k, stream):
                     if element.group.next:
                         element.group.next.prev = element.group.prev
                 if element.group.next and element.group.next.count_diff == 1:
+                    if len(element.group.elements) == 0:
+                        element.group.next.count_diff += element.group.count_diff
                     element.group = element.group.next
                 else:
                     new_group = SketchGroup(1)
@@ -35,6 +40,7 @@ def misra_gries(k, stream):
                     else:
                         new_group.prev = element.group
                     if element.group.next:
+                        element.group.next.count_diff -= 1
                         new_group.next = element.group.next
                         element.group.next.prev = new_group
                     element.group.next = new_group
