@@ -10,72 +10,23 @@ from sortedcontainers import SortedList
 
 
 def misra_gries(k, stream):
-    first_group = SketchGroup(0)
-    first_group.elements = SortedList(range(-k, 0))
-    sketch = {key: SketchElement(first_group) for key in range(-k, 0)}
+    zero_group = SortedList(range(-k, 0))
+    sketch = {key: 0 for key in range(-k, 0)}
 
-    for key in stream:
-        if key in sketch:
-            element = sketch[key]
-            if len(element.group.elements) == 1 and (not element.group.next
-                                                     or element.group.next.count_diff > 1):
-                element.group.count_diff += 1
-                if element.group.next:
-                    element.group.next.count_diff -= 1
-            else:
-                element.group.elements.remove(key)
-                if len(element.group.elements) == 0:
-                    if element.group.prev:
-                        element.group.prev.next = element.group.next
-                    if element.group.next:
-                        element.group.next.prev = element.group.prev
-                if element.group.next and element.group.next.count_diff == 1:
-                    if len(element.group.elements) == 0:
-                        element.group.next.count_diff += element.group.count_diff
-                    element.group = element.group.next
-                else:
-                    new_group = SketchGroup(1)
-                    if len(element.group.elements) == 0:
-                        new_group.prev = element.group.prev
-                    else:
-                        new_group.prev = element.group
-                    if element.group.next:
-                        element.group.next.count_diff -= 1
-                        new_group.next = element.group.next
-                        element.group.next.prev = new_group
-                    element.group.next = new_group
-                    element.group = new_group
-                if len(first_group.elements) == 0:
-                    first_group = first_group.next
-                element.group.elements.add(key)
-        elif first_group.count_diff >= 1:
-            first_group.count_diff -= 1
+    for element in stream:
+        if element in sketch:
+            if sketch[element] == 0:
+                zero_group.remove(element)
+            sketch[element] += 1
+        elif len(zero_group) == 0:
+            for key in sketch:
+                sketch[key] -= 1
+                if sketch[key] == 0:
+                    zero_group.add(key)
         else:
-            min_zero_key = first_group.elements.pop(0)
-            del sketch[min_zero_key]
-            element = SketchElement()
-            sketch[key] = element
-            if first_group.next and first_group.next.count_diff == 1:
-                element.group = first_group.next
-            else:
-                new_group = SketchGroup(1)
-                new_group.prev = first_group
-                if first_group.next:
-                    new_group.next = first_group.next
-                    first_group.next.prev = new_group
-                first_group.next = new_group
-                element.group = new_group
-            element.group.elements.add(key)
-            if len(first_group.elements) == 0:
-                first_group = first_group.next
-
-    group = first_group
-    count = 0
-    while group:
-        count += group.count_diff
-        for key in group.elements:
-            sketch[key] = count
-        group = group.next
+            removed_key = zero_group.pop(0)
+            del sketch[removed_key]
+            sketch[element] = 1
 
     final_sketch = {}
     for key in sorted(sketch):
@@ -100,19 +51,6 @@ def private_misra_gries(sketch, epsilon, delta):
             private_sketch[key] = counter
 
     return private_sketch
-
-
-class SketchElement:
-    def __init__(self, group=None):
-        self.group = group
-
-
-class SketchGroup:
-    def __init__(self, count_diff):
-        self.count_diff = count_diff
-        self.elements = SortedList()
-        self.prev = None
-        self.next = None
 
 
 def main():
