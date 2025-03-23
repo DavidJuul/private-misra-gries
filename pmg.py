@@ -2,10 +2,8 @@
 
 
 import math
-import secrets
+import random
 import sys
-
-from diffprivlib.mechanisms import Geometric
 
 
 def misra_gries(k, stream):
@@ -57,12 +55,17 @@ def private_misra_gries(sketch, epsilon, delta):
     threshold = 1 + 2 * math.ceil(
         math.log(6 * math.exp(epsilon) / ((math.exp(epsilon) + 1) * delta))
         / epsilon)
-    geometric = Geometric(epsilon=epsilon,
-                          random_state=secrets.SystemRandom())
-    eta = geometric.randomise(0)
 
+    rand = random.SystemRandom()
+    logP = math.log(1 - (1 - math.exp(-epsilon)))
+    def geometric():
+        return math.floor(math.log(1 - rand.random()) / logP) + 1
+    def two_sided_geometric():
+        return geometric() - geometric()
+
+    eta = two_sided_geometric()
     for key in sorted(sketch):
-        counter = sketch[key] + eta + geometric.randomise(0)
+        counter = sketch[key] + eta + two_sided_geometric()
         if counter >= threshold:
             private_sketch[key] = counter
 
