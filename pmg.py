@@ -6,27 +6,43 @@ import secrets
 import sys
 
 from diffprivlib.mechanisms import Geometric
-from sortedcontainers import SortedList
 
 
 def misra_gries(k, stream):
-    zero_group = SortedList(range(-k, 0))
     sketch = {key: 0 for key in range(-k, 0)}
+    zero_group = list(range(-k, 0))
+    zero_pointer = 0
+
+    def decrement_all():
+        nonlocal zero_group, zero_pointer
+        zero_group = []
+        for key in sketch:
+            sketch[key] -= 1
+            if sketch[key] == 0:
+                zero_group.append(key)
+        zero_group.sort()
+        zero_pointer = 0
+
+    def insert_element(element):
+        nonlocal zero_pointer
+        while True:
+            removed_key = zero_group[zero_pointer]
+            zero_pointer += 1
+            if sketch[removed_key] == 0:
+                break
+            if zero_pointer == len(zero_group):
+                decrement_all()
+                return
+        del sketch[removed_key]
+        sketch[element] = 1
 
     for element in stream:
         if element in sketch:
-            if sketch[element] == 0:
-                zero_group.remove(element)
             sketch[element] += 1
-        elif len(zero_group) == 0:
-            for key in sketch:
-                sketch[key] -= 1
-                if sketch[key] == 0:
-                    zero_group.add(key)
+        elif zero_pointer == len(zero_group):
+            decrement_all()
         else:
-            removed_key = zero_group.pop(0)
-            del sketch[removed_key]
-            sketch[element] = 1
+            insert_element(element)
 
     final_sketch = {}
     for key in sorted(sketch):
