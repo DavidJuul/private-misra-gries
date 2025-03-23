@@ -59,7 +59,7 @@ def private_misra_gries(sketch, epsilon, delta):
     rand = random.SystemRandom()
     logP = math.log(1 - (1 - math.exp(-epsilon)))
     def geometric():
-        return math.floor(math.log(1 - rand.random()) / logP) + 1
+        return math.floor(math.log(1 - rand.random()) / logP)
     def two_sided_geometric():
         return geometric() - geometric()
 
