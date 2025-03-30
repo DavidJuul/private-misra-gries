@@ -11,9 +11,12 @@ def misra_gries(stream, k):
     sketch = {key: 0 for key in range(-k, 0)}
     zero_group = list(range(-k, 0))
     zero_pointer = 0
+    element_count = 0
+    decrement_count = 0
 
     def decrement_all():
-        nonlocal zero_group, zero_pointer
+        nonlocal zero_group, zero_pointer, decrement_count
+        decrement_count += 1
         zero_group = []
         for key in sketch:
             sketch[key] -= 1
@@ -36,6 +39,7 @@ def misra_gries(stream, k):
         sketch[element] = 1
 
     for element in stream:
+        element_count += 1
         if element in sketch:
             sketch[element] += 1
         elif zero_pointer == len(zero_group):
@@ -48,7 +52,7 @@ def misra_gries(stream, k):
         if key >= 0:
             final_sketch[key] = sketch[key]
 
-    return final_sketch
+    return final_sketch, element_count, decrement_count
 
 
 def private_misra_gries(sketch, epsilon, delta):
@@ -73,25 +77,29 @@ def private_misra_gries(sketch, epsilon, delta):
     return private_sketch
 
 
-def pure_private_misra_gries(sketch, k, epsilon, max_key):
+def pure_private_misra_gries(sketch, k, epsilon, element_count,
+                             decrement_count, max_key):
     noisy_sketch = {}
+    offset = decrement_count - math.floor(element_count / (k + 1))
 
     rand = random.SystemRandom()
-    logP = math.log(1 - (1 - math.exp(-epsilon / k)))
+    logP = math.log(1 - (1 - math.exp(-epsilon / 2)))
     def geometric():
         return math.floor(math.log(1 - rand.random()) / logP)
     def two_sided_geometric():
         return geometric() - geometric()
 
-    eta = two_sided_geometric()
     for key in range(max_key + 1):
-        counter = sketch[key] if key in sketch else 0
-        counter += eta + two_sided_geometric()
+        if key in sketch:
+            counter = max(sketch[key] + offset, 0)
+        else:
+            counter = 0
+        counter += two_sided_geometric()
         if counter >= 1:
             noisy_sketch[key] = counter
 
     top_k = sorted(noisy_sketch.items(), key=lambda item: item[1])[-k:]
-    private_sketch = sorted(top_k)
+    private_sketch = dict(sorted(top_k))
 
     return private_sketch
 
@@ -124,14 +132,14 @@ def main():
 
         with open(sys.argv[4], encoding="utf8") as stream:
             stream = map(int, stream)
-            sketch = misra_gries(stream, k)
+            sketch, element_count, decrement_count = misra_gries(stream, k)
 
         if delta > 0:
             private_sketch = private_misra_gries(sketch, epsilon, delta)
         else:
             max_key = 100000
-            private_sketch = pure_private_misra_gries(sketch, k, epsilon,
-                                                      max_key)
+            private_sketch = pure_private_misra_gries(
+                sketch, k, epsilon, element_count, decrement_count, max_key)
 
         print("Sketch        :", sketch)
         print("Private sketch:", private_sketch)
