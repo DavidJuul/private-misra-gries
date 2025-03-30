@@ -1,6 +1,7 @@
 """Differentially private Misra-Gries in practice"""
 
 
+import json
 import math
 import random
 import sys
@@ -72,22 +73,66 @@ def private_misra_gries(sketch, epsilon, delta):
     return private_sketch
 
 
+def merge(sketches):
+    return sketches[0]
+
+
+def private_merge(merged, epsilon, delta):
+    return merged
+
+
 def main():
-    if len(sys.argv) != 5:
-        print("Usage: {} <amount of counters> <epsilon> <delta> <stream file>".format(sys.argv[0]))
+    if len(sys.argv) < 5:
+        print("Differentially private Misra-Gries in practice")
+        print("Usage:")
+        print("  Create a sketch:")
+        print("    {} <amount of counters> <epsilon> <delta> <stream file> [output sketch file]"
+              .format(sys.argv[0]))
+        print("  Merge sketches:")
+        print("    {} merge <epsilon> <delta> <sketch file> [<sketch file> ...]"
+              .format(sys.argv[0]))
+
         return
 
-    k = int(sys.argv[1])
-    epsilon = float(sys.argv[2])
-    delta = float(sys.argv[3])
-    with open(sys.argv[4], encoding="utf8") as stream:
-        stream = map(int, stream)
-        sketch = misra_gries(k, stream)
+    def create_sketch():
+        k = int(sys.argv[1])
+        epsilon = float(sys.argv[2])
+        delta = float(sys.argv[3])
 
-    private_sketch = private_misra_gries(sketch, epsilon, delta)
+        with open(sys.argv[4], encoding="utf8") as stream:
+            stream = map(int, stream)
+            sketch = misra_gries(k, stream)
 
-    print("Sketch        :", sketch)
-    print("Private sketch:", private_sketch)
+        private_sketch = private_misra_gries(sketch, epsilon, delta)
+
+        print("Sketch        :", sketch)
+        print("Private sketch:", private_sketch)
+
+        if (len(sys.argv) >= 6):
+            with open(sys.argv[5], "w", encoding="utf8") as output:
+                json.dump(sketch, output)
+
+    def merge_sketches():
+        epsilon = float(sys.argv[2])
+        delta = float(sys.argv[3])
+        sketch_files = sys.argv[4:]
+
+        sketches = []
+        for file in sketch_files:
+            with open(file, encoding="utf8") as input_:
+                sketches.append(json.load(input_))
+
+        merged = merge(sketches)
+
+        private_merged = private_merge(merged, epsilon, delta)
+
+        print("Merged        :", merged)
+        print("Private merged:", private_merged)
+
+    if sys.argv[1] == "merge":
+        merge_sketches()
+    else:
+        create_sketch()
 
 
 if __name__ == "__main__":
