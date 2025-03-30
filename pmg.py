@@ -7,7 +7,7 @@ import random
 import sys
 
 
-def misra_gries(k, stream):
+def misra_gries(stream, k):
     sketch = {key: 0 for key in range(-k, 0)}
     zero_group = list(range(-k, 0))
     zero_pointer = 0
@@ -73,6 +73,29 @@ def private_misra_gries(sketch, epsilon, delta):
     return private_sketch
 
 
+def pure_private_misra_gries(sketch, k, epsilon, max_key):
+    noisy_sketch = {}
+
+    rand = random.SystemRandom()
+    logP = math.log(1 - (1 - math.exp(-epsilon / k)))
+    def geometric():
+        return math.floor(math.log(1 - rand.random()) / logP)
+    def two_sided_geometric():
+        return geometric() - geometric()
+
+    eta = two_sided_geometric()
+    for key in range(max_key + 1):
+        counter = sketch[key] if key in sketch else 0
+        counter += eta + two_sided_geometric()
+        if counter >= 1:
+            noisy_sketch[key] = counter
+
+    top_k = sorted(noisy_sketch.items(), key=lambda item: item[1])[-k:]
+    private_sketch = sorted(top_k)
+
+    return private_sketch
+
+
 def merge(sketches):
     return sketches[0]
 
@@ -101,9 +124,14 @@ def main():
 
         with open(sys.argv[4], encoding="utf8") as stream:
             stream = map(int, stream)
-            sketch = misra_gries(k, stream)
+            sketch = misra_gries(stream, k)
 
-        private_sketch = private_misra_gries(sketch, epsilon, delta)
+        if delta > 0:
+            private_sketch = private_misra_gries(sketch, epsilon, delta)
+        else:
+            max_key = 100000
+            private_sketch = pure_private_misra_gries(sketch, k, epsilon,
+                                                      max_key)
 
         print("Sketch        :", sketch)
         print("Private sketch:", private_sketch)
