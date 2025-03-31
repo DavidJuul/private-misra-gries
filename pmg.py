@@ -104,12 +104,51 @@ def pure_private_misra_gries(sketch, k, epsilon, element_count,
     return private_sketch
 
 
-def merge(sketches):
-    return sketches[0]
+def merge(sketches, k):
+    summed_sketch = sketches[0]
+    merged = {}
 
+    for sketch in sketches[1:]:
+        for key in sketch:
+            if key in summed_sketch:
+                summed_sketch[key] += sketch[key]
+            else:
+                summed_sketch[key] = sketch[key]
 
-def private_merge(merged, epsilon, delta):
+        if len(summed_sketch) > k:
+            offset = sorted(summed_sketch.items(),
+                            key=lambda item: item[1])[-(k + 1)][1]
+        else:
+            offset = 0
+        for key in summed_sketch:
+            if summed_sketch[key] > offset:
+                merged[key] = summed_sketch[key] - offset
+
+        summed_sketch = merged
+
     return merged
+
+
+def private_merge(merged, k, epsilon, delta):
+    private_merged = {}
+    threshold = math.ceil(
+        1 + 2 * (k * math.log(2 * k * math.exp(epsilon / k)
+                              / ((math.exp(epsilon / k) + 1) * delta))
+                 / epsilon))
+
+    rand = random.SystemRandom()
+    logP = math.log(1 - (1 - math.exp(-epsilon / k)))
+    def geometric():
+        return math.floor(math.log(1 - rand.random()) / logP)
+    def two_sided_geometric():
+        return geometric() - geometric()
+
+    for key in sorted(merged):
+        counter = merged[key] + two_sided_geometric()
+        if counter >= threshold:
+            private_merged[key] = counter
+
+    return private_merged
 
 
 def main():
@@ -120,7 +159,7 @@ def main():
         print("    {} <amount of counters> <epsilon> <delta> <stream file> [output sketch file]"
               .format(sys.argv[0]))
         print("  Merge sketches:")
-        print("    {} merge <epsilon> <delta> <sketch file> [<sketch file> ...]"
+        print("    {} merge <amount of counters> <epsilon> <delta> <sketch file> [<sketch file> ...]"
               .format(sys.argv[0]))
 
         return
@@ -149,18 +188,20 @@ def main():
                 json.dump(sketch, output)
 
     def merge_sketches():
-        epsilon = float(sys.argv[2])
-        delta = float(sys.argv[3])
-        sketch_files = sys.argv[4:]
+        k = int(sys.argv[2])
+        epsilon = float(sys.argv[3])
+        delta = float(sys.argv[4])
+        sketch_files = sys.argv[5:]
 
         sketches = []
         for file in sketch_files:
             with open(file, encoding="utf8") as input_:
-                sketches.append(json.load(input_))
+                sketches.append({int(key): counter for key, counter
+                                 in json.load(input_).items()})
 
-        merged = merge(sketches)
+        merged = merge(sketches, k)
 
-        private_merged = private_merge(merged, epsilon, delta)
+        private_merged = private_merge(merged, k, epsilon, delta)
 
         print("Merged        :", merged)
         print("Private merged:", private_merged)
