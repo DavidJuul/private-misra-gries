@@ -57,9 +57,10 @@ def misra_gries(stream, k):
 
 def private_misra_gries(sketch, epsilon, delta):
     private_sketch = {}
-    threshold = 1 + 2 * math.ceil(
-        math.log(6 * math.exp(epsilon) / ((math.exp(epsilon) + 1) * delta))
-        / epsilon)
+    threshold = math.ceil(
+        1 + 2 * (math.log(6 * math.exp(epsilon)
+                          / ((math.exp(epsilon) + 1) * delta))
+                 / epsilon))
 
     rand = random.SystemRandom()
     logP = math.log(1 - (1 - math.exp(-epsilon)))
