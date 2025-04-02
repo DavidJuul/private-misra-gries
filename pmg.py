@@ -106,10 +106,10 @@ def pure_private_misra_gries(sketch, k, epsilon, element_count,
 
 
 def merge(sketches, k):
-    summed_sketch = sketches[0]
-    merged = {}
+    merged = sketches[0]
 
     for sketch in sketches[1:]:
+        summed_sketch = merged
         for key in sketch:
             if key in summed_sketch:
                 summed_sketch[key] += sketch[key]
@@ -124,8 +124,6 @@ def merge(sketches, k):
         for key in summed_sketch:
             if summed_sketch[key] > offset:
                 merged[key] = summed_sketch[key] - offset
-
-        summed_sketch = merged
 
     return merged
 
