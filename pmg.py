@@ -82,16 +82,18 @@ def private_misra_gries(sketch, epsilon, delta, sensitivity=1, threshold=-1,
     return private_sketch
 
 
-def pure_private_misra_gries(sketch, k, epsilon, element_count,
-                             decrement_count, universe_size):
+def pure_private_misra_gries(sketch, k, epsilon, universe_size, element_count,
+                             decrement_count, sensitivity=2,
+                             offset_counts=True):
     noisy_sketch = {}
-    offset = decrement_count - math.floor(element_count / (k + 1))
+    offset = (decrement_count - math.floor(element_count / (k + 1))
+              if offset_counts else 0)
     threshold = math.ceil(
-        math.log((1 + math.exp(-epsilon / 2)) * k / universe_size)
-        / math.log(math.exp(-epsilon / 2)))
+        math.log((1 + math.exp(-epsilon / sensitivity)) * k / universe_size)
+        / math.log(math.exp(-epsilon / sensitivity)))
 
     rand = random.SystemRandom()
-    logP = math.log(1 - (1 - math.exp(-epsilon / 2)))
+    logP = math.log(1 - (1 - math.exp(-epsilon / sensitivity)))
     def geometric():
         return math.floor(math.log(1 - rand.random()) / logP)
     def two_sided_geometric():
@@ -146,6 +148,11 @@ def private_merge(merged, k, epsilon, delta):
     return private_misra_gries(merged, epsilon, delta, k, threshold, False)
 
 
+def pure_private_merge(merged, k, epsilon, universe_size):
+    return pure_private_misra_gries(merged, k, epsilon, universe_size, None,
+                                    None, k, False)
+
+
 def main():
     if len(sys.argv) < 5:
         print("Differentially private Misra-Gries in practice")
@@ -172,7 +179,7 @@ def main():
         if delta > 0:
             file = sys.argv[4]
         else:
-            universe_size = float(sys.argv[4])
+            universe_size = int(sys.argv[4])
             file = sys.argv[5]
 
         with open(file, encoding="utf8") as stream:
@@ -198,7 +205,11 @@ def main():
         k = int(sys.argv[2])
         epsilon = float(sys.argv[3])
         delta = float(sys.argv[4])
-        sketch_files = sys.argv[5:]
+        if delta > 0:
+            sketch_files = sys.argv[5:]
+        else:
+            universe_size = int(sys.argv[5])
+            sketch_files = sys.argv[6:]
 
         sketches = []
         for file in sketch_files:
@@ -208,7 +219,11 @@ def main():
 
         merged = merge(sketches, k)
 
-        private_merged = private_merge(merged, k, epsilon, delta)
+        if delta > 0:
+            private_merged = private_merge(merged, k, epsilon, delta)
+        else:
+            private_merged = pure_private_merge(merged, k, epsilon,
+                                                universe_size)
 
         print("Merged        :", merged)
         print("Private merged:", private_merged)
