@@ -57,21 +57,23 @@ def misra_gries(stream, k):
     return final_sketch, element_count, decrement_count
 
 
-def private_misra_gries(sketch, epsilon, delta):
+def private_misra_gries(sketch, epsilon, delta, sensitivity=1, threshold=-1,
+                        global_noise=True):
     private_sketch = {}
-    threshold = math.ceil(
-        1 + 2 * (math.log(6 * math.exp(epsilon)
-                          / ((math.exp(epsilon) + 1) * delta))
-                 / epsilon))
+    if threshold == -1:
+        threshold = math.ceil(
+            1 + 2 * (math.log(6 * math.exp(epsilon)
+                              / ((math.exp(epsilon) + 1) * delta))
+                     / epsilon))
 
     rand = random.SystemRandom()
-    logP = math.log(1 - (1 - math.exp(-epsilon)))
+    logP = math.log(1 - (1 - math.exp(-epsilon / sensitivity)))
     def geometric():
         return math.floor(math.log(1 - rand.random()) / logP)
     def two_sided_geometric():
         return geometric() - geometric()
 
-    eta = two_sided_geometric()
+    eta = two_sided_geometric() if global_noise else 0
     for key in sorted(sketch):
         counter = sketch[key] + eta + two_sided_geometric()
         if counter >= threshold:
@@ -137,25 +139,11 @@ def merge(sketches, k):
 
 
 def private_merge(merged, k, epsilon, delta):
-    private_merged = {}
     threshold = math.ceil(
         1 + 2 * (k * math.log(2 * k * math.exp(epsilon / k)
                               / ((math.exp(epsilon / k) + 1) * delta))
                  / epsilon))
-
-    rand = random.SystemRandom()
-    logP = math.log(1 - (1 - math.exp(-epsilon / k)))
-    def geometric():
-        return math.floor(math.log(1 - rand.random()) / logP)
-    def two_sided_geometric():
-        return geometric() - geometric()
-
-    for key in sorted(merged):
-        counter = merged[key] + two_sided_geometric()
-        if counter >= threshold:
-            private_merged[key] = counter
-
-    return private_merged
+    return private_misra_gries(merged, epsilon, delta, k, threshold, False)
 
 
 def main():
