@@ -162,12 +162,18 @@ def main():
     if len(sys.argv) < 5:
         print("Differentially private Misra-Gries in practice")
         print("Usage:")
-        print("  Create a sketch:")
-        print("    {} <amount of counters> <epsilon> <delta> <stream file> [output sketch file]"
-              .format(sys.argv[0]))
-        print("  Merge sketches:")
-        print("    {} merge <amount of counters> <epsilon> <delta> <sketch file> [<sketch file> ...]"
-              .format(sys.argv[0]))
+        print("  Create an (epsilon, delta)-private sketch:")
+        print(f"    {sys.argv[0]} <sketch size> <epsilon> <delta> "
+              "<stream file> [output sketch file]")
+        print("  Create an (epsilon, 0)-private sketch:")
+        print(f"    {sys.argv[0]} <sketch size> <epsilon> 0 <universe size> "
+              "<stream file> [output sketch file]")
+        print("  Merge sketches with (epsilon, delta)-privacy:")
+        print(f"    {sys.argv[0]} merge <sketch size> <epsilon> <delta> "
+              "<sketch file> [<sketch file> ...]")
+        print("  Merge sketches with (epsilon, 0)-privacy:")
+        print(f"    {sys.argv[0]} merge <sketch size> <epsilon> 0 "
+              "<universe size> <sketch file> [<sketch file> ...]")
 
         return
 
@@ -175,15 +181,19 @@ def main():
         k = int(sys.argv[1])
         epsilon = float(sys.argv[2])
         delta = float(sys.argv[3])
+        if delta > 0:
+            file = sys.argv[4]
+        else:
+            universe_size = float(sys.argv[4])
+            file = sys.argv[5]
 
-        with open(sys.argv[4], encoding="utf8") as stream:
+        with open(file, encoding="utf8") as stream:
             stream = map(int, stream)
             sketch, element_count, decrement_count = misra_gries(stream, k)
 
         if delta > 0:
             private_sketch = private_misra_gries(sketch, epsilon, delta)
         else:
-            universe_size = 1000000
             private_sketch = pure_private_misra_gries(
                 sketch, k, epsilon, element_count, decrement_count,
                 universe_size)
@@ -191,8 +201,9 @@ def main():
         print("Sketch        :", sketch)
         print("Private sketch:", private_sketch)
 
-        if (len(sys.argv) >= 6):
-            with open(sys.argv[5], "w", encoding="utf8") as output:
+        if ((delta > 0 and len(sys.argv) >= 6) or len(sys.argv) >= 7):
+            output_file = sys.argv[5] if delta > 0 else sys.argv[6]
+            with open(output_file, "w", encoding="utf8") as output:
                 json.dump(sketch, output)
 
     def merge_sketches():
