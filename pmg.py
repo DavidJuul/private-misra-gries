@@ -6,6 +6,8 @@ import math
 import random
 import sys
 
+from numpy.random import binomial
+
 
 def misra_gries(stream, k):
     sketch = {key: 0 for key in range(-k, 0)}
@@ -79,9 +81,12 @@ def private_misra_gries(sketch, epsilon, delta):
 
 
 def pure_private_misra_gries(sketch, k, epsilon, element_count,
-                             decrement_count, max_key):
+                             decrement_count, universe_size):
     noisy_sketch = {}
     offset = decrement_count - math.floor(element_count / (k + 1))
+    threshold = math.ceil(
+        math.log((1 + math.exp(-epsilon / 2)) * k / universe_size)
+        / math.log(math.exp(-epsilon / 2)))
 
     rand = random.SystemRandom()
     logP = math.log(1 - (1 - math.exp(-epsilon / 2)))
@@ -90,14 +95,17 @@ def pure_private_misra_gries(sketch, k, epsilon, element_count,
     def two_sided_geometric():
         return geometric() - geometric()
 
-    for key in range(max_key + 1):
-        if key in sketch:
-            counter = max(sketch[key] + offset, 0)
-        else:
-            counter = 0
-        counter += two_sided_geometric()
-        if counter >= 1:
+    for key in sketch:
+        counter = sketch[key] + offset + two_sided_geometric()
+        if counter >= threshold:
             noisy_sketch[key] = counter
+
+    upgrade_count = binomial(universe_size, k / universe_size)
+    while upgrade_count > 0:
+        key = rand.randrange(0, universe_size)
+        if key not in noisy_sketch:
+            noisy_sketch[key] = threshold + geometric()
+            upgrade_count -= 1
 
     top_k = sorted(noisy_sketch.items(), key=lambda item: item[1])[-k:]
     private_sketch = dict(sorted(top_k))
@@ -175,9 +183,10 @@ def main():
         if delta > 0:
             private_sketch = private_misra_gries(sketch, epsilon, delta)
         else:
-            max_key = 100000
+            universe_size = 1000000
             private_sketch = pure_private_misra_gries(
-                sketch, k, epsilon, element_count, decrement_count, max_key)
+                sketch, k, epsilon, element_count, decrement_count,
+                universe_size)
 
         print("Sketch        :", sketch)
         print("Private sketch:", private_sketch)
