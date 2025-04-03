@@ -1,6 +1,7 @@
 """Differentially private Misra-Gries in practice"""
 
 
+from collections.abc import Callable, Iterable, Sequence
 import json
 import math
 import random
@@ -12,14 +13,16 @@ from numpy.random import binomial
 RANDOM = random.SystemRandom()
 
 
-def misra_gries(stream, sketch_size):
+def misra_gries(stream: Iterable[int],
+                sketch_size: int,
+                ) -> tuple[dict[int, int], int, int]:
     sketch = {key: 0 for key in range(-sketch_size, 0)}
     zero_group = list(range(-sketch_size, 0))
     zero_pointer = 0
     element_count = 0
     decrement_count = 0
 
-    def decrement_all():
+    def decrement_all() -> None:
         nonlocal zero_group, zero_pointer, decrement_count
         decrement_count += 1
         zero_group = []
@@ -30,7 +33,7 @@ def misra_gries(stream, sketch_size):
         zero_group.sort()
         zero_pointer = 0
 
-    def insert_key(key):
+    def insert_key(key: int) -> None:
         nonlocal zero_pointer
         while True:
             removed_key = zero_group[zero_pointer]
@@ -60,8 +63,13 @@ def misra_gries(stream, sketch_size):
     return final_sketch, element_count, decrement_count
 
 
-def privatize_misra_gries(sketch, epsilon, delta, sensitivity=1, threshold=-1,
-                          add_global_noise=True):
+def privatize_misra_gries(sketch: dict[int, int],
+                          epsilon: float,
+                          delta: float,
+                          sensitivity: int = 1,
+                          threshold: float = -1,
+                          add_global_noise: bool = True,
+                          ) -> dict[int, int]:
     if threshold == -1:
         threshold = math.ceil(
             1 + 2 * (math.log(6 * math.exp(epsilon)
@@ -79,9 +87,15 @@ def privatize_misra_gries(sketch, epsilon, delta, sensitivity=1, threshold=-1,
     return private_sketch
 
 
-def purely_privatize_misra_gries(sketch, sketch_size, epsilon, universe_size,
-                                 element_count, decrement_count, sensitivity=2,
-                                 offset_counts=True):
+def purely_privatize_misra_gries(sketch: dict[int, int],
+                                 sketch_size: int,
+                                 epsilon: float,
+                                 universe_size: int,
+                                 element_count: int,
+                                 decrement_count: int,
+                                 sensitivity: int = 2,
+                                 offset_counts: bool = True,
+                                 ) -> dict[int, int]:
     offset = (decrement_count - math.floor(element_count / (sketch_size + 1))
               if offset_counts else 0)
     threshold = math.ceil(
@@ -111,7 +125,9 @@ def purely_privatize_misra_gries(sketch, sketch_size, epsilon, universe_size,
     return private_sketch
 
 
-def merge(sketches, sketch_size):
+def merge(sketches: Sequence[dict[int, int]],
+          sketch_size: int,
+          ) -> dict[int, int]:
     merged = sketches[0]
     for sketch in sketches[1:]:
         summed_sketch = merged
@@ -133,7 +149,11 @@ def merge(sketches, sketch_size):
     return merged
 
 
-def privatize_merged(merged, sketch_size, epsilon, delta):
+def privatize_merged(merged: dict[int, int],
+                     sketch_size: int,
+                     epsilon: float,
+                     delta: float,
+                     ) -> dict[int, int]:
     threshold = math.ceil(
         1 + 2 * (sketch_size * math.log(2 * sketch_size
                                         * math.exp(epsilon / sketch_size)
@@ -144,23 +164,31 @@ def privatize_merged(merged, sketch_size, epsilon, delta):
                                  threshold, False)
 
 
-def purely_privatize_merged(merged, sketch_size, epsilon, universe_size):
+def purely_privatize_merged(merged: dict[int, int],
+                            sketch_size: int,
+                            epsilon: float,
+                            universe_size: int,
+                            ) -> dict[int, int]:
     return purely_privatize_misra_gries(merged, sketch_size, epsilon,
                                         universe_size, None, None, sketch_size,
                                         False)
 
 
-def create_geometric(epsilon, sensitivity):
+def create_geometric(epsilon: float,
+                     sensitivity: float,
+                     ) -> Callable[[], int]:
     log_alpha = math.log(math.exp(-epsilon / sensitivity))
     return lambda: math.floor(math.log(1 - RANDOM.random()) / log_alpha)
 
 
-def create_two_sided_geometric(epsilon, sensitivity):
+def create_two_sided_geometric(epsilon: float,
+                               sensitivity: float,
+                               ) -> Callable[[], int]:
     geometric = create_geometric(epsilon, sensitivity)
     return lambda: geometric() - geometric()
 
 
-def create_sketch():
+def create_sketch() -> None:
     sketch_size = int(sys.argv[1])
     epsilon = float(sys.argv[2])
     delta = float(sys.argv[3])
@@ -193,7 +221,7 @@ def create_sketch():
             json.dump(sketch, output)
 
 
-def merge_sketches():
+def merge_sketches() -> None:
     sketch_size = int(sys.argv[2])
     epsilon = float(sys.argv[3])
     delta = float(sys.argv[4])
@@ -223,7 +251,7 @@ def merge_sketches():
     print("Private merged:", private_merged)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 5:
         print("Differentially private Misra-Gries in practice")
         print("Usage:")
