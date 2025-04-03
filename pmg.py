@@ -9,6 +9,9 @@ import sys
 from numpy.random import binomial
 
 
+RANDOM = random.SystemRandom()
+
+
 def misra_gries(stream, k):
     sketch = {key: 0 for key in range(-k, 0)}
     zero_group = list(range(-k, 0))
@@ -58,24 +61,18 @@ def misra_gries(stream, k):
 
 
 def private_misra_gries(sketch, epsilon, delta, sensitivity=1, threshold=-1,
-                        global_noise=True):
-    private_sketch = {}
+                        add_global_noise=True):
     if threshold == -1:
         threshold = math.ceil(
             1 + 2 * (math.log(6 * math.exp(epsilon)
                               / ((math.exp(epsilon) + 1) * delta))
                      / epsilon))
+    two_sided_geometric = create_two_sided_geometric(epsilon, sensitivity)
+    global_noise = two_sided_geometric() if add_global_noise else 0
 
-    rand = random.SystemRandom()
-    logP = math.log(1 - (1 - math.exp(-epsilon / sensitivity)))
-    def geometric():
-        return math.floor(math.log(1 - rand.random()) / logP)
-    def two_sided_geometric():
-        return geometric() - geometric()
-
-    eta = two_sided_geometric() if global_noise else 0
+    private_sketch = {}
     for key in sorted(sketch):
-        counter = sketch[key] + eta + two_sided_geometric()
+        counter = sketch[key] + global_noise + two_sided_geometric()
         if counter >= threshold:
             private_sketch[key] = counter
 
@@ -85,20 +82,15 @@ def private_misra_gries(sketch, epsilon, delta, sensitivity=1, threshold=-1,
 def pure_private_misra_gries(sketch, k, epsilon, universe_size, element_count,
                              decrement_count, sensitivity=2,
                              offset_counts=True):
-    noisy_sketch = {}
     offset = (decrement_count - math.floor(element_count / (k + 1))
               if offset_counts else 0)
     threshold = math.ceil(
         math.log((1 + math.exp(-epsilon / sensitivity)) * k / universe_size)
         / math.log(math.exp(-epsilon / sensitivity)))
+    geometric = create_geometric(epsilon, sensitivity)
+    two_sided_geometric = create_two_sided_geometric(epsilon, sensitivity)
 
-    rand = random.SystemRandom()
-    logP = math.log(1 - (1 - math.exp(-epsilon / sensitivity)))
-    def geometric():
-        return math.floor(math.log(1 - rand.random()) / logP)
-    def two_sided_geometric():
-        return geometric() - geometric()
-
+    noisy_sketch = {}
     for key in sketch:
         counter = sketch[key] + offset + two_sided_geometric()
         if counter >= threshold:
@@ -106,7 +98,7 @@ def pure_private_misra_gries(sketch, k, epsilon, universe_size, element_count,
 
     upgrade_count = binomial(universe_size, k / universe_size)
     while upgrade_count > 0:
-        key = rand.randrange(0, universe_size)
+        key = RANDOM.randrange(0, universe_size)
         if key not in noisy_sketch:
             noisy_sketch[key] = threshold + geometric()
             upgrade_count -= 1
@@ -151,6 +143,16 @@ def private_merge(merged, k, epsilon, delta):
 def pure_private_merge(merged, k, epsilon, universe_size):
     return pure_private_misra_gries(merged, k, epsilon, universe_size, None,
                                     None, k, False)
+
+
+def create_geometric(epsilon, sensitivity):
+    log_alpha = math.log(math.exp(-epsilon / sensitivity))
+    return lambda: math.floor(math.log(1 - RANDOM.random()) / log_alpha)
+
+
+def create_two_sided_geometric(epsilon, sensitivity):
+    geometric = create_geometric(epsilon, sensitivity)
+    return lambda: geometric() - geometric()
 
 
 def main():
