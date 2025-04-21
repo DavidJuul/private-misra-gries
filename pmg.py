@@ -115,7 +115,7 @@ def privatize_misra_gries(sketch: dict[int, int],
         sketch: The Misra-Gries sketch to privatize.
         epsilon: The epsilon parameter for the approximate privacy.
         delta: The delta parameter for the approximate privacy.
-        sensitivity: The global l1 sensitivity of the given sketch.
+        sensitivity: The global L1 sensitivity of the given sketch.
         threshold: The threshold for counters to be included in the private
             sketch. If -1, the default threshold is calculated based on delta.
         add_global_noise: Whether or not to add global noise as well.
@@ -156,7 +156,7 @@ def purely_privatize_misra_gries(sketch: dict[int, int],
     The given sketch should consist of integer keys >= 0 and < universe_size.
     By default, a sketch as outputted by the misra_gries() function is
     privatized by first post-processing it through offsetting all counters,
-    ensuring the global l1 sensitivity is only 2.
+    ensuring the global L1 sensitivity is only 2.
 
     Args:
         sketch: The Misra-Gries sketch to privatize.
@@ -167,7 +167,7 @@ def purely_privatize_misra_gries(sketch: dict[int, int],
             input stream. If offset_counters is False, this value is unused.
         decrement_count: The count of decrements performed when calculating the
             given sketch. If offset_counters is False, this value is unused.
-        sensitivity: The global l1 sensitivity of the given sketch.
+        sensitivity: The global L1 sensitivity of the given sketch.
         offset_counters: Whether or not to first perform the post-processing.
 
     Returns:
@@ -306,7 +306,7 @@ def create_geometric(epsilon: float,
 
     Args:
         epsilon: The privacy epsilon parameter for the desired noise.
-        sensitivity: The global l1 sensitivity for the desired noise.
+        sensitivity: The global L1 sensitivity for the desired noise.
 
     Returns:
         A function for sampling from the geometric distribution that can be
@@ -323,7 +323,7 @@ def create_two_sided_geometric(epsilon: float,
 
     Args:
         epsilon: The privacy epsilon parameter for the desired noise.
-        sensitivity: The global l1 sensitivity for the desired noise.
+        sensitivity: The global L1 sensitivity for the desired noise.
 
     Returns:
         A function for sampling from the two-sided geometric distribution that
