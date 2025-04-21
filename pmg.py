@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Differentially private Misra-Gries in practice.
 
 This module allows creating and merging differentially private Misra-Gries
