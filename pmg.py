@@ -300,6 +300,67 @@ def purely_privatize_merged(merged: dict[int, int],
                                         False)
 
 
+def privatize_user_level(sketch: dict[int, int],
+                         epsilon: float,
+                         delta: float,
+                         user_element_count: int,
+                         ) -> dict[int, int]:
+    """User-level approximately privatize the given Misra-Gries sketch.
+
+    Each user can contribute up to user_element_count elements to the sketch.
+    This simply uses the privatize_misra_gries() function with scaled values of
+    epsilon and delta.
+
+    Args:
+        sketch: The Misra-Gries sketch to privatize.
+        epsilon: The epsilon parameter for the approximate privacy.
+        delta: The delta parameter for the approximate privacy, which is used
+            for selecting the threshold.
+        user_element_count: The maximum amount of elements (not necessarily
+            distinct) that each user can have contributed to the input stream.
+
+    Returns:
+        The user-level approximately privatized Misra-Gries sketch.
+    """
+    scaled_epsilon = epsilon / user_element_count
+    scaled_delta = delta / (user_element_count * math.exp(epsilon))
+    return privatize_misra_gries(sketch, scaled_epsilon, scaled_delta)
+
+
+def purely_privatize_user_level(sketch: dict[int, int],
+                                sketch_size: int,
+                                epsilon: float,
+                                universe_size: int,
+                                element_count: int,
+                                decrement_count: int,
+                                user_element_count: int,
+                                ) -> dict[int, int]:
+    """User-level purely privatize the given Misra-Gries sketch.
+
+    The sketch should consist of integer keys >= 0 and < universe_size. This
+    simply uses the purely_privatize_misra_gries() function with a higher
+    global sensitivity.
+
+    Args:
+        sketch: The Misra-Gries sketch to privatize.
+        sketch_size: The maximum size that was desired for the given sketch.
+        epsilon: The epsilon parameter for the pure privacy.
+        universe_size: The size of the element universe.
+        element_count: The count of (valid) elements that were seen in the
+            input stream.
+        decrement_count: The count of decrements performed when calculating the
+            given sketch.
+        user_element_count: The maximum amount of elements (not necessarily
+            distinct) that each user can have contributed to the input stream.
+
+    Returns:
+        The user-level purely privatized Misra-Gries sketch.
+    """
+    return purely_privatize_misra_gries(sketch, sketch_size, epsilon,
+                                        universe_size, element_count,
+                                        decrement_count, user_element_count)
+
+
 def create_geometric(epsilon: float,
                      sensitivity: float,
                      ) -> Callable[[], int]:
@@ -413,6 +474,46 @@ def merge_sketches() -> None:
     print("Private merged:", private_merged)
 
 
+def create_user_level_sketch() -> None:
+    """Create a user-level private Misra-Gries sketches according to the
+    command-line arguments.
+
+    The sketch is created by streaming from a file containing a flattened
+    version of the input stream given as a command-line argument. Both the
+    non-private and user-level private sketches are printed as output. If the
+    delta argument is 0, the functions for purely privatizing the sketch are
+    used, and otherwise it is approximately privatized.
+    """
+    sketch_size = int(sys.argv[2])
+    epsilon = float(sys.argv[3])
+    delta = float(sys.argv[4])
+    user_element_count = int(sys.argv[5])
+    if delta > 0:
+        file = sys.argv[6]
+    else:
+        universe_size = int(sys.argv[6])
+        file = sys.argv[7]
+
+    # Create the sketch from the file stream.
+    with open(file, encoding="utf8") as stream:
+        stream = map(int, stream)
+        sketch, element_count, decrement_count = misra_gries(stream,
+                                                             sketch_size)
+
+    # User-level privatize the sketch.
+    if delta > 0:
+        private_sketch = privatize_user_level(sketch, epsilon, delta,
+                                              user_element_count)
+    else:
+        private_sketch = purely_privatize_user_level(sketch, sketch_size,
+            epsilon, universe_size, element_count, decrement_count,
+            user_element_count)
+
+    # Output the user-level private sketch.
+    print("Sketch                   :", sketch)
+    print("User-level private sketch:", private_sketch)
+
+
 def main() -> None:
     """Run the program for creating and merging private Misra-Gries sketches.
 
@@ -435,12 +536,21 @@ def main() -> None:
         print("  Merge sketches with (epsilon, 0)-privacy:")
         print(f"    {sys.argv[0]} merge <sketch size> <epsilon> 0 "
               "<universe size> <sketch file> [<sketch file> ...]")
+        print("  Create a user-level (epsilon, delta)-private sketch:")
+        print(f"    {sys.argv[0]} userlevel <sketch size> <epsilon> <delta> "
+              "<user element count> <stream file>")
+        print("  Create a user-level (epsilon, 0)-private sketch:")
+        print(f"    {sys.argv[0]} userlevel <sketch size> <epsilon> 0 "
+              "<user element count> <universe size> <sketch file>")
         return
 
-    if sys.argv[1] == "merge":
-        merge_sketches()
-    else:
-        create_sketch()
+    match sys.argv[1]:
+        case "merge":
+            merge_sketches()
+        case "userlevel":
+            create_user_level_sketch()
+        case _:
+            create_sketch()
 
 
 if __name__ == "__main__":
