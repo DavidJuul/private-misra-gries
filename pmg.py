@@ -125,10 +125,7 @@ def privatize_misra_gries(sketch: dict[int, int],
         The approximately privatized Misra-Gries sketch.
     """
     if threshold == -1:
-        threshold = math.ceil(
-            1 + 2 * (math.log(6 * math.exp(epsilon)
-                              / ((math.exp(epsilon) + 1) * delta))
-                     / epsilon))
+        threshold = find_threshold(epsilon, delta, 1)
     two_sided_geometric = create_two_sided_geometric(epsilon, sensitivity)
     global_noise = two_sided_geometric() if add_global_noise else 0
 
@@ -393,6 +390,59 @@ def create_two_sided_geometric(epsilon: float,
     """
     geometric = create_geometric(epsilon, sensitivity)
     return lambda: geometric() - geometric()
+
+
+def find_threshold(epsilon, delta, sensitivity):
+    """TODO:"""
+    def pmf(j: int):
+        # Return the probability that a two-sided geometric variable is equal
+        # to any integer j.
+        return ((1 - math.exp(-epsilon / sensitivity))
+                / (1 + math.exp(-epsilon / sensitivity))
+                * math.exp(-epsilon * abs(j) / sensitivity))
+
+    def cdf(j: int):
+        # Return the probability that a two-sided geometric variable is greater
+        # than or equal to any integer j.
+        j2 = -j + 1 if j < 0 else j
+        probability = (math.exp((-j2 + 1) * (epsilon / sensitivity))
+                       / (math.exp(epsilon / sensitivity) + 1))
+        return 1 - probability if j < 0 else probability
+
+    probability_goal = delta / 2
+    probability_tolerance = delta / 1e9
+
+    threshold = 1
+    min_threshold = 1
+    max_threshold = -1
+    while min_threshold != max_threshold:
+        total_probability = 0
+        for global_noise_change in [1, -1]:
+            global_noise = global_noise_change
+            probability = 1
+            while (total_probability < probability_goal
+                   and probability > probability_tolerance):
+                global_probability = pmf(global_noise)
+                local_probability = cdf(threshold - global_noise)
+                probability = (global_probability * (2 * local_probability
+                                                     - local_probability ** 2))
+                total_probability += probability
+                global_noise += global_noise_change
+
+        if max_threshold != -1:
+            if total_probability > probability_goal:
+                min_threshold = threshold + 1
+            else:
+                max_threshold = threshold
+            threshold = (min_threshold + max_threshold) // 2
+        elif total_probability <= probability_goal:
+            max_threshold = threshold
+            threshold = (min_threshold + max_threshold) // 2
+        else:
+            min_threshold = threshold + 1
+            threshold *= 2
+
+    return threshold
 
 
 def create_sketch() -> None:
