@@ -392,7 +392,23 @@ def find_threshold(epsilon: float,
                    sensitivity: float = 1,
                    max_unique_keys = 2,
                    ) -> int:
-    """TODO:"""
+    """Find the necessary threshold to hide the difference in unique keys.
+
+    The threshold is found accurately through binary search by summing up the
+    probabilities that the global noise and local noises exceed the threshold.
+
+    Args:
+        epsilon: The epsilon parameter for the approximate privacy.
+        delta: The delta parameter for the approximate privacy.
+        sensitivity: The global L1 sensitivity of the Misra-Gries sketch that
+            is being approximately privatized.
+        max_unique_keys: The maximum possible number of unique keys that can be
+            stored in only one sketch and not a neighboring sketch.
+
+    Returns:
+        The necessary threshold that hides the difference in unique stored keys
+        between neighboring sketches under approximate privacy.
+    """
     def pmf(j: int):
         # Return the probability that a two-sided geometric variable is equal
         # to any integer j.
@@ -408,9 +424,13 @@ def find_threshold(epsilon: float,
                        / (math.exp(epsilon / sensitivity) + 1))
         return 1 - probability if j < 0 else probability
 
+    # The delta privacy budget is split between this sketch and a neighboring
+    # sketch, and the tolerance level for the probabilities to sum up is set
+    # significantly lower than delta.
     probability_goal = delta / 2
     probability_tolerance = delta / 1e9
 
+    # Search through the possible thresholds.
     threshold = 1
     min_threshold = 1
     max_threshold = -1
@@ -419,6 +439,8 @@ def find_threshold(epsilon: float,
         for global_noise_change in [1, -1]:
             global_noise = global_noise_change
             probability = 1
+            # Sum the probabilities of all the possible global noise and local
+            # noise combinations that are at least equal to the threshold.
             while (total_probability < probability_goal
                    and probability > probability_tolerance):
                 global_probability = pmf(global_noise)
@@ -429,6 +451,9 @@ def find_threshold(epsilon: float,
                 total_probability += probability
                 global_noise += global_noise_change
 
+        # Perform binary search when an upper bound for the threshold has been
+        # found. This upper bound is found by first repeatedly multiplying the
+        # threshold by 2.
         if max_threshold != -1:
             if total_probability > probability_goal:
                 min_threshold = threshold + 1
