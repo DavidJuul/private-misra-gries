@@ -261,12 +261,7 @@ def privatize_merged(merged: dict[int, int],
     Returns:
         The approximately privatized merged Misra-Gries sketch.
     """
-    threshold = math.ceil(
-        1 + 2 * (sketch_size * math.log(2 * sketch_size
-                                        * math.exp(epsilon / sketch_size)
-                              / ((math.exp(epsilon / sketch_size) + 1)
-                                 * delta))
-                 / epsilon))
+    threshold = find_threshold(epsilon, delta, sketch_size, sketch_size)
     return privatize_misra_gries(merged, epsilon, delta, sketch_size,
                                  threshold, False)
 
@@ -392,7 +387,11 @@ def create_two_sided_geometric(epsilon: float,
     return lambda: geometric() - geometric()
 
 
-def find_threshold(epsilon, delta, sensitivity):
+def find_threshold(epsilon: float,
+                   delta: float,
+                   sensitivity: float = 1,
+                   max_unique_keys = 2,
+                   ) -> int:
     """TODO:"""
     def pmf(j: int):
         # Return the probability that a two-sided geometric variable is equal
@@ -424,8 +423,9 @@ def find_threshold(epsilon, delta, sensitivity):
                    and probability > probability_tolerance):
                 global_probability = pmf(global_noise)
                 local_probability = cdf(threshold - global_noise)
-                probability = (global_probability * (2 * local_probability
-                                                     - local_probability ** 2))
+                probability = (global_probability
+                               * (1 - (1 - local_probability)
+                                      ** max_unique_keys))
                 total_probability += probability
                 global_noise += global_noise_change
 
