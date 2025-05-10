@@ -500,8 +500,8 @@ def create_sketch() -> None:
         private_sketch = privatize_misra_gries(sketch, epsilon, delta)
     else:
         private_sketch = purely_privatize_misra_gries(
-            sketch, sketch_size, epsilon, element_count, decrement_count,
-            universe_size)
+            sketch, sketch_size, epsilon, universe_size, element_count,
+            decrement_count)
 
     # Output the sketch.
     print("Sketch        :", sketch)
