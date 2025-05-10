@@ -83,14 +83,16 @@ class TestMisraGries(unittest.TestCase):
             ({2: 0, 3: 1, 4: 2}, 11, 2),
         ]
         for input_, expected_output in zip(inputs, expected_outputs):
-            output = pmg.misra_gries(input_[0], input_[1])
+            stream = input_[0]
+            sketch_size = input_[1]
+            output = pmg.misra_gries(stream, sketch_size)
             self.assertTupleEqual(output, expected_output)
 
     def test_max_decrement_count(self):
         unique_elements = 100
+        stream = range(1, unique_elements + 1)
         sketch_size = 10
-        _, _, decrement_count = pmg.misra_gries(range(1, unique_elements + 1),
-                                                sketch_size)
+        _, _, decrement_count = pmg.misra_gries(stream, sketch_size)
         max_decrements = unique_elements // (sketch_size + 1)
         self.assertEqual(decrement_count, max_decrements)
 
@@ -155,7 +157,7 @@ class TestPrivatizeMisraGries(unittest.TestCase):
         element_count = 100
         decrement_count = 0
         epsilon = 1
-        universe_size = element_count * 10
+        universe_size = element_count * 1000
         private_sketch = pmg.purely_privatize_misra_gries(
             sketch, sketch_size, epsilon, universe_size, element_count,
             decrement_count)
@@ -185,8 +187,10 @@ class TestMerge(unittest.TestCase):
             self.assertDictEqual(merged, expected_merged)
 
 
-def plot_benchmark(title, label, repetitions, function, input_lengths, input_generator):
-    print("Benchmarking {}: {}...".format(title, label))
+def plot_benchmark(title, label, repetitions, function, input_lengths,
+                   input_generator):
+    print_label = ": {}".format(label) if label else ""
+    print("Benchmarking {}{}...".format(title, print_label))
     execution_times = []
     for input_length in input_lengths:
         execution_time = 0
@@ -353,7 +357,7 @@ def benchmark():
 
 
 def test_privacy():
-    """Run the stochastic testing of the privacy."""
+    """Run the stochastic privacy testing."""
     # TODO:
 
 
