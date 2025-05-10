@@ -160,7 +160,8 @@ def purely_privatize_misra_gries(sketch: dict[int, int],
         sketch: The Misra-Gries sketch to privatize.
         sketch_size: The maximum size that was desired for the given sketch.
         epsilon: The epsilon parameter for the pure privacy.
-        universe_size: The size of the element universe.
+        universe_size: The size of the element universe. This must be larger
+            than sketch_size.
         element_count: The count of (valid) elements that were seen in the
             input stream. If offset_counters is False, this value is unused.
         decrement_count: The count of decrements performed when calculating the
