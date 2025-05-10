@@ -229,6 +229,7 @@ def merge(sketches: Sequence[dict[int, int]],
                 summed_sketch[key] = sketch[key]
 
         if len(summed_sketch) > sketch_size:
+            merged = {}
             offset = sorted(summed_sketch.items(),
                             key=lambda item: item[1])[-(sketch_size + 1)][1]
             for key in summed_sketch:
