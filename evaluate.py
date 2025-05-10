@@ -8,9 +8,14 @@ different iterations of the module, and stochastic testing of the privacy.
 
 
 import math
+import random
+import time
 import unittest
 
+import matplotlib.pyplot as plt
+
 import pmg
+import pmg_alternatives
 
 
 class TestGeometric(unittest.TestCase):
@@ -180,14 +185,171 @@ class TestMerge(unittest.TestCase):
             self.assertDictEqual(merged, expected_merged)
 
 
+def plot_benchmark(title, label, repetitions, function, input_lengths, input_generator):
+    print("Benchmarking {}: {}...".format(title, label))
+    execution_times = []
+    for input_length in input_lengths:
+        execution_time = 0
+        for _ in range(repetitions):
+            input_ = input_generator(input_length)
+            start_time = time.perf_counter()
+            function(*input_)
+            execution_time += time.perf_counter() - start_time
+        execution_times.append(execution_time / repetitions)
+    plt.plot(input_lengths, execution_times, label=label)
+
+
+def benchmark_misra_gries():
+    repetitions = 10
+    # stream_lengths = [200 * 2 ** i for i in range(14)]
+    stream_lengths = [200 * 2 ** i for i in range(8)]
+    sketch_size = 100
+
+    # Benchmark on input with only unique elements.
+    def input_generator_without_repeats(stream_length):
+        return range(stream_length), sketch_size
+    plt.clf()
+    title = "Misra-Gries without repeats"
+    plt.title(title)
+    plt.xlabel("Stream length")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "Unoptimized version", repetitions,
+                   pmg_alternatives.misra_gries_unoptimized, stream_lengths,
+                   input_generator_without_repeats)
+    plot_benchmark(title, "Fully-grouped version", repetitions,
+                   pmg_alternatives.misra_gries_with_groups, stream_lengths,
+                   input_generator_without_repeats)
+    plot_benchmark(title, "Zero-group version (final)", repetitions,
+                   pmg.misra_gries, stream_lengths,
+                   input_generator_without_repeats)
+    plt.legend()
+    plt.savefig("benchmark_misra_gries_without_repeats.png")
+
+    # Benchmark on input with repating elements.
+    def input_generator_with_repeats(stream_length):
+        return (map(lambda i: i % sketch_size, range(stream_length)),
+                sketch_size)
+    plt.clf()
+    title = "Misra-Gries with repeats"
+    plt.title(title)
+    plt.xlabel("Stream length")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "Unoptimized version", repetitions,
+                   pmg_alternatives.misra_gries_unoptimized, stream_lengths,
+                   input_generator_with_repeats)
+    plot_benchmark(title, "Fully-grouped version", repetitions,
+                   pmg_alternatives.misra_gries_with_groups, stream_lengths,
+                   input_generator_with_repeats)
+    plot_benchmark(title, "Zero-group version (final)", repetitions,
+                   pmg.misra_gries, stream_lengths,
+                   input_generator_with_repeats)
+    plt.legend()
+    plt.savefig("benchmark_misra_gries_with_repeats.png")
+
+
+def benchmark_privatize():
+    repetitions = 10
+    # sketch_sizes = [10 * 2 ** i for i in range(16)]
+    sketch_sizes = [10 * 2 ** i for i in range(12)]
+    epsilon = 1
+    delta = 1e-6
+
+    def input_generator(sketch_size):
+        return {i: i for i in range(sketch_size)}, epsilon, delta
+    plt.clf()
+    title = "Misra-Gries approximate privatization"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Execution time [s]")
+    default_random = pmg.RANDOM
+    pmg.random = random.Random()
+    plot_benchmark(title, "Pseudo-random sampling", repetitions,
+                   pmg.privatize_misra_gries, sketch_sizes, input_generator)
+    pmg.random = default_random
+    plot_benchmark(title, "Cryptographic sampling (final)", repetitions,
+                   pmg.privatize_misra_gries, sketch_sizes, input_generator)
+    plt.legend()
+    plt.savefig("benchmark_privatize.png")
+
+
+def benchmark_purely_privatize():
+    repetitions = 10
+    sketch_size = 100
+    sketch = {i: i for i in range(sketch_size)}
+    epsilon = 1
+    # universe_sizes = [int(sketch_size * 2 ** i) for i in range(2, 14)]
+    universe_sizes = [int(sketch_size * 2 ** i) for i in range(2, 8)]
+    decrement_count = 0
+
+    def input_generator(universe_size):
+        element_count = sketch_size
+        return (sketch, sketch_size, epsilon, universe_size, element_count,
+                decrement_count)
+    plt.clf()
+    title = "Misra-Gries pure privatization"
+    plt.title(title)
+    plt.xlabel("Universe size")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "Unoptimized version", repetitions,
+                   pmg_alternatives.purely_privatize_misra_gries_unoptimized,
+                   universe_sizes, input_generator)
+    plot_benchmark(title, "Optimized version (final)", repetitions,
+                   pmg.purely_privatize_misra_gries, universe_sizes,
+                   input_generator)
+    plt.legend()
+    plt.savefig("benchmark_purely_privatize.png")
+
+
+def benchmark_merge():
+    repetitions = 10
+    # sketch_sizes = [10 * 2 ** i for i in range(16)]
+    sketch_sizes = [10 * 2 ** i for i in range(14)]
+
+    def input_generator(sketch_size):
+        return ([{i: i for i in range(sketch_size)},
+                 {i: i for i in range(sketch_size, sketch_size * 2)}],
+                sketch_size)
+    plt.clf()
+    title = "Misra-Gries merging"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "", repetitions, pmg.merge, sketch_sizes,
+                   input_generator)
+    plt.savefig("benchmark_merge.png")
+
+
+def benchmark_find_threshold():
+    repetitions = 10
+    # epsilons = [1 / 2 ** i for i in range(12)]
+    epsilons = [1 / 2 ** i for i in range(8)]
+    delta = 1e-6
+
+    def input_generator(epsilon):
+        return epsilon, delta
+    plt.clf()
+    title = "Finding thresholds"
+    plt.title(title)
+    plt.xlabel("Epsilon")
+    plt.xscale("log")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "", repetitions, pmg.find_threshold, epsilons,
+                   input_generator)
+    plt.savefig("benchmark_find_threshold.png")
+
+
 def test():
     """Run the unit tests."""
-    unittest.main(verbosity=2)
+    unittest.main(verbosity=2, exit=False)
 
 
 def benchmark():
     """Run the benchmarks."""
-    # TODO:
+    benchmark_misra_gries()
+    benchmark_privatize()
+    benchmark_purely_privatize()
+    benchmark_merge()
+    benchmark_find_threshold()
 
 
 def test_privacy():
@@ -197,8 +359,13 @@ def test_privacy():
 
 def main():
     """Run the evaluation of the private Misra-Gries sketching program."""
+    print("RUNNING UNIT TESTS...")
     test()
+    print("-" * 70)
+    print("RUNNING BENCHMARKS...")
     benchmark()
+    print("-" * 70)
+    print("RUNNING STOCHASTIC PRIVACY TESTING...")
     test_privacy()
 
 
