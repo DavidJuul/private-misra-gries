@@ -467,7 +467,8 @@ def find_threshold(epsilon: float,
             min_threshold = threshold + 1
             threshold *= 2
 
-    return threshold
+    # Add 1 to account for the actual count of the unique keys.
+    return threshold + 1
 
 
 def create_sketch() -> None:
