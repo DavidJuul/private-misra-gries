@@ -7,6 +7,7 @@ different iterations of the module, and stochastic testing of the privacy.
 """
 
 
+import json
 import math
 import random
 import time
@@ -342,6 +343,153 @@ def benchmark_find_threshold():
     plt.savefig("benchmark_find_threshold.png")
 
 
+def plot_privatization_distribution(title, repetitions, function, sketch,
+                                    neighbor_sketch, epsilon, delta,
+                                    input_generator):
+    print("Testing {}...".format(title))
+    plt.clf()
+    plt.title(title)
+    plt.xticks([])
+    plt.ylabel("Count")
+
+    # Count the occurring privatized sketches.
+    privates = {}
+    neighbor_privates = {}
+    for _ in range(repetitions):
+        private = json.dumps(function(*input_generator(sketch)))
+        if private in privates:
+            privates[private] += 1
+        else:
+            privates[private] = 1
+        neighbor_private = json.dumps(
+            function(*input_generator(neighbor_sketch)))
+        if neighbor_private in neighbor_privates:
+            neighbor_privates[neighbor_private] += 1
+        else:
+            neighbor_privates[neighbor_private] = 1
+
+    # Scale the distribution according to the privacy.
+    for private in privates:
+        privates[private] = math.exp(epsilon) * privates[private] + delta
+
+    plt.bar(privates.keys(), privates.values(), alpha=0.5,
+            label="Scaled distribution of privatized sketch")
+    plt.bar(neighbor_privates.keys(), neighbor_privates.values(), alpha=0.5,
+            label="Distribution of privatized neighbor sketch")
+    plt.legend()
+
+
+def test_privacy_privatize():
+    repetitions = 1000
+    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
+    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    epsilon = 1
+    delta = 0.01
+
+    def input_generator(sketch):
+        return sketch, epsilon, delta
+    title = "Privacy of approximate privatization"
+    plot_privatization_distribution(
+        title, repetitions, pmg.privatize_misra_gries, sketch, neighbor_sketch,
+        epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize.png")
+
+
+def test_privacy_purely_privatize():
+    repetitions = 2000
+    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
+    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    sketch_size = len(sketch)
+    epsilon = 1
+    delta = 0
+    universe_size = 15
+    element_count = 221
+    decrement_count = 10
+
+    def input_generator(sketch):
+        return (sketch, sketch_size, epsilon, universe_size, element_count,
+                decrement_count)
+    title = "Privacy of pure privatization"
+    plot_privatization_distribution(
+        title, repetitions, pmg.purely_privatize_misra_gries, sketch,
+        neighbor_sketch, epsilon, delta, input_generator)
+    plt.savefig("privacy_purely_privatize.png")
+
+
+def test_privacy_privatize_merged():
+    repetitions = 1000
+    merged = {1: 140, 2: 1, 3: 70, 4: 0}
+    neighbor_merged = {1: 140, 3: 70, 5: 0, 6: 0}
+    merged_size = len(merged)
+    epsilon = 1
+    delta = 0.01
+
+    def input_generator(merged):
+        return merged, merged_size, epsilon, delta
+    title = "Privacy of approximate privatization of merged"
+    plot_privatization_distribution(
+        title, repetitions, pmg.privatize_merged, merged, neighbor_merged,
+        epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize_merged.png")
+
+
+def test_privacy_purely_privatize_merged():
+    repetitions = 1000
+    merged = {1: 140, 2: 1, 3: 70, 4: 0}
+    neighbor_merged = {1: 140, 3: 70, 5: 0, 6: 0}
+    merged_size = len(merged)
+    epsilon = 1
+    delta = 0
+    universe_size = 15
+
+    def input_generator(merged):
+        return merged, merged_size, epsilon, universe_size
+    title = "Privacy of pure privatization of merged"
+    plot_privatization_distribution(
+        title, repetitions, pmg.purely_privatize_merged, merged,
+        neighbor_merged, epsilon, delta, input_generator)
+    plt.savefig("privacy_purely_privatize_merged.png")
+
+
+def test_privacy_privatize_user_level():
+    repetitions = 1000
+    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
+    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    epsilon = 1
+    delta = 0.01
+    user_element_count = 5
+
+    def input_generator(sketch):
+        return sketch, epsilon, delta, user_element_count
+    title = "Privacy of user-level approximate privatization"
+    plot_privatization_distribution(
+        title, repetitions, pmg.privatize_user_level, sketch, neighbor_sketch,
+        epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize_user_level.png")
+
+
+def test_privacy_purely_privatize_user_level():
+    repetitions = 1000
+    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
+    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    sketch_size = len(sketch)
+    epsilon = 1
+    delta = 0
+    universe_size = 15
+    element_count = 221
+    decrement_count = 10
+    user_element_count = 5
+
+    def input_generator(sketch):
+        return (sketch, sketch_size, epsilon, universe_size, element_count,
+                decrement_count, user_element_count)
+    title = "Privacy of user-level pure privatization"
+    plot_privatization_distribution(
+        title, repetitions, pmg.purely_privatize_user_level, sketch,
+        neighbor_sketch, epsilon, delta, input_generator)
+    plt.savefig("privacy_purely_privatize_user_level.png")
+
+
 def test():
     """Run the unit tests."""
     unittest.main(verbosity=2, exit=False)
@@ -358,7 +506,12 @@ def benchmark():
 
 def test_privacy():
     """Run the stochastic privacy testing."""
-    # TODO:
+    test_privacy_privatize()
+    test_privacy_purely_privatize()
+    test_privacy_privatize_merged()
+    test_privacy_purely_privatize_merged()
+    test_privacy_privatize_user_level()
+    test_privacy_purely_privatize_user_level()
 
 
 def main():
