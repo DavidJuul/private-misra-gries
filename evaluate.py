@@ -204,7 +204,7 @@ def plot_benchmark(title, label, repetitions, function, input_lengths,
     plt.plot(input_lengths, execution_times, label=label)
 
 
-def benchmark_misra_gries():
+def benchmark_misra_gries_stream_length():
     repetitions = 10
     # stream_lengths = [200 * 2 ** i for i in range(14)]
     stream_lengths = [200 * 2 ** i for i in range(8)]
@@ -228,7 +228,7 @@ def benchmark_misra_gries():
                    pmg.misra_gries, stream_lengths,
                    input_generator_without_repeats)
     plt.legend()
-    plt.savefig("benchmark_misra_gries_without_repeats.png")
+    plt.savefig("benchmark_misra_gries_stream_without_repeats.png")
 
     # Benchmark on input with repating elements.
     def input_generator_with_repeats(stream_length):
@@ -249,7 +249,55 @@ def benchmark_misra_gries():
                    pmg.misra_gries, stream_lengths,
                    input_generator_with_repeats)
     plt.legend()
-    plt.savefig("benchmark_misra_gries_with_repeats.png")
+    plt.savefig("benchmark_misra_gries_stream_with_repeats.png")
+
+
+def benchmark_misra_gries_sketch_size():
+    repetitions = 10
+    # sketch_sizes = [10 * 2 ** i for i in range(12)]
+    sketch_sizes = [10 * 2 ** i for i in range(8)]
+    stream_length = sketch_sizes[-1] * 2
+
+    # Benchmark on input with only unique elements.
+    def input_generator_without_repeats(sketch_size):
+        return range(stream_length), sketch_size
+    plt.clf()
+    title = "Misra-Gries without repeats"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "Unoptimized version", repetitions,
+                   pmg_alternatives.misra_gries_unoptimized, sketch_sizes,
+                   input_generator_without_repeats)
+    plot_benchmark(title, "Fully-grouped version", repetitions,
+                   pmg_alternatives.misra_gries_with_groups, sketch_sizes,
+                   input_generator_without_repeats)
+    plot_benchmark(title, "Zero-group version (final)", repetitions,
+                   pmg.misra_gries, sketch_sizes,
+                   input_generator_without_repeats)
+    plt.legend()
+    plt.savefig("benchmark_misra_gries_sketch_without_repeats.png")
+
+    # Benchmark on input with repating elements.
+    def input_generator_with_repeats(sketch_size):
+        return (map(lambda i: i % sketch_size, range(stream_length)),
+                sketch_size)
+    plt.clf()
+    title = "Misra-Gries with repeats"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "Unoptimized version", repetitions,
+                   pmg_alternatives.misra_gries_unoptimized, sketch_sizes,
+                   input_generator_with_repeats)
+    plot_benchmark(title, "Fully-grouped version", repetitions,
+                   pmg_alternatives.misra_gries_with_groups, sketch_sizes,
+                   input_generator_with_repeats)
+    plot_benchmark(title, "Zero-group version (final)", repetitions,
+                   pmg.misra_gries, sketch_sizes,
+                   input_generator_with_repeats)
+    plt.legend()
+    plt.savefig("benchmark_misra_gries_sketch_with_repeats.png")
 
 
 def benchmark_privatize():
