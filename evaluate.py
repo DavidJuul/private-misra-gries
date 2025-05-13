@@ -386,6 +386,7 @@ def benchmark_find_threshold():
     plt.xlabel("Epsilon")
     plt.xscale("log")
     plt.ylabel("Execution time [s]")
+    plt.yscale("log")
     plot_benchmark(title, "", repetitions, pmg.find_threshold, epsilons,
                    input_generator)
     plt.savefig("benchmark_find_threshold.png")
