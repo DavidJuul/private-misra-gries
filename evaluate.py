@@ -201,7 +201,7 @@ def plot_benchmark(title, label, repetitions, function, input_lengths,
             function(*input_)
             execution_time += time.perf_counter() - start_time
         execution_times.append(execution_time / repetitions)
-    plt.plot(input_lengths, execution_times, label=label)
+    plt.plot(input_lengths, execution_times, label=label, marker=".")
 
 
 def benchmark_misra_gries_stream_length():
