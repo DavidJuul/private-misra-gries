@@ -439,7 +439,7 @@ def find_threshold(epsilon: float,
     while min_threshold != max_threshold:
         total_probability = 0
         for global_noise_change in [1, -1]:
-            global_noise = global_noise_change
+            global_noise = 0 if global_noise_change == 1 else -1
             probability = 1
             # Sum the probabilities of all the possible global noise and local
             # noise combinations that are at least equal to the threshold.
