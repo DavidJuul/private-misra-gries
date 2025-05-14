@@ -204,6 +204,54 @@ def plot_benchmark(title, label, repetitions, function, input_lengths,
     plt.plot(input_lengths, execution_times, label=label, marker=".")
 
 
+def plot_privatization_distribution(title, repetitions, function, sketch,
+                                    neighbor_sketch, epsilon, delta,
+                                    input_generator):
+    print("Testing {}...".format(title))
+    plt.clf()
+    plt.title(title)
+    plt.xlabel("Sketch distribution")
+    plt.xticks([])
+    plt.ylabel("Count")
+
+    # Count the occurring privatized sketches.
+    privates = {}
+    neighbor_privates = {}
+    for _ in range(repetitions):
+        private = json.dumps(function(*input_generator(sketch)))
+        if private in privates:
+            privates[private] += 1
+        else:
+            privates[private] = 1
+        neighbor_private = json.dumps(
+            function(*input_generator(neighbor_sketch)))
+        if neighbor_private in neighbor_privates:
+            neighbor_privates[neighbor_private] += 1
+        else:
+            neighbor_privates[neighbor_private] = 1
+
+    # Scale the distribution according to the privacy.
+    delta_offset = delta * repetitions
+    for private in privates:
+        privates[private] = (math.exp(epsilon) * privates[private]
+                             + delta_offset)
+    for neighbor_private in neighbor_privates:
+        if neighbor_private not in privates:
+            privates[neighbor_private] = delta_offset
+
+    # Sort the distribution from most to least occurrences.
+    privates = dict(sorted(privates.items(), key=lambda item: item[1],
+                           reverse=True))
+    neighbor_privates = dict(sorted(neighbor_privates.items(),
+                                    key=lambda item: item[1], reverse=True))
+
+    plt.bar(privates.keys(), privates.values(), alpha=0.5,
+            label="Scaled distribution of privatized sketch")
+    plt.bar(neighbor_privates.keys(), neighbor_privates.values(), alpha=0.5,
+            label="Distribution of privatized neighbor sketch")
+    plt.legend()
+
+
 def benchmark_misra_gries_stream_length():
     repetitions = 10
     # stream_lengths = [200 * 2 ** i for i in range(14)]
@@ -390,54 +438,6 @@ def benchmark_find_threshold():
     plot_benchmark(title, "", repetitions, pmg.find_threshold, epsilons,
                    input_generator)
     plt.savefig("benchmark_find_threshold.png")
-
-
-def plot_privatization_distribution(title, repetitions, function, sketch,
-                                    neighbor_sketch, epsilon, delta,
-                                    input_generator):
-    print("Testing {}...".format(title))
-    plt.clf()
-    plt.title(title)
-    plt.xlabel("Sketch distribution")
-    plt.xticks([])
-    plt.ylabel("Count")
-
-    # Count the occurring privatized sketches.
-    privates = {}
-    neighbor_privates = {}
-    for _ in range(repetitions):
-        private = json.dumps(function(*input_generator(sketch)))
-        if private in privates:
-            privates[private] += 1
-        else:
-            privates[private] = 1
-        neighbor_private = json.dumps(
-            function(*input_generator(neighbor_sketch)))
-        if neighbor_private in neighbor_privates:
-            neighbor_privates[neighbor_private] += 1
-        else:
-            neighbor_privates[neighbor_private] = 1
-
-    # Scale the distribution according to the privacy.
-    delta_offset = delta * repetitions
-    for private in privates:
-        privates[private] = (math.exp(epsilon) * privates[private]
-                             + delta_offset)
-    for neighbor_private in neighbor_privates:
-        if neighbor_private not in privates:
-            privates[neighbor_private] = delta_offset
-
-    # Sort the distribution from most to least occurrences.
-    privates = dict(sorted(privates.items(), key=lambda item: item[1],
-                           reverse=True))
-    neighbor_privates = dict(sorted(neighbor_privates.items(),
-                                    key=lambda item: item[1], reverse=True))
-
-    plt.bar(privates.keys(), privates.values(), alpha=0.5,
-            label="Scaled distribution of privatized sketch")
-    plt.bar(neighbor_privates.keys(), neighbor_privates.values(), alpha=0.5,
-            label="Distribution of privatized neighbor sketch")
-    plt.legend()
 
 
 def test_privacy_privatize():
