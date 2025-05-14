@@ -398,6 +398,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     print("Testing {}...".format(title))
     plt.clf()
     plt.title(title)
+    plt.xlabel("Sketch distribution")
     plt.xticks([])
     plt.ylabel("Count")
 
@@ -425,6 +426,12 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     for neighbor_private in neighbor_privates:
         if neighbor_private not in privates:
             privates[neighbor_private] = delta_offset
+
+    # Sort the distribution from most to least occurrences.
+    privates = dict(sorted(privates.items(), key=lambda item: item[1],
+                           reverse=True))
+    neighbor_privates = dict(sorted(neighbor_privates.items(),
+                                    key=lambda item: item[1], reverse=True))
 
     plt.bar(privates.keys(), privates.values(), alpha=0.5,
             label="Scaled distribution of privatized sketch")
