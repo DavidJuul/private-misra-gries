@@ -472,6 +472,13 @@ def test_privacy_privatize():
             neighbor_sketch, epsilon, delta, input_generator)
     plt.savefig("privacy_privatize_original_threshold.png")
 
+    title = "Privacy of approximate privatization by keys"
+    plot_privatization_distribution(
+        title, repetitions,
+        lambda *args: list(pmg.privatize_misra_gries(*args)), sketch,
+        neighbor_sketch, epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize_keys.png")
+
 
 def test_privacy_purely_privatize():
     repetitions = 2000
@@ -492,6 +499,13 @@ def test_privacy_purely_privatize():
         title, repetitions, pmg.purely_privatize_misra_gries, sketch,
         neighbor_sketch, epsilon, delta, input_generator)
     plt.savefig("privacy_purely_privatize.png")
+
+    title = "Privacy of pure privatization by keys"
+    plot_privatization_distribution(
+        title, repetitions,
+        lambda *args: list(pmg.purely_privatize_misra_gries(*args)), sketch,
+        neighbor_sketch, epsilon, delta, input_generator)
+    plt.savefig("privacy_purely_privatize_keys.png")
 
 
 def test_privacy_privatize_merged():
@@ -537,6 +551,13 @@ def test_privacy_purely_privatize_merged():
         neighbor_merged, epsilon, delta, input_generator)
     plt.savefig("privacy_purely_privatize_merged.png")
 
+    title = "Privacy of pure privatization of merged by keys"
+    plot_privatization_distribution(
+        title, repetitions,
+        lambda *args: list(pmg.purely_privatize_merged(*args)), merged,
+        neighbor_merged, epsilon, delta, input_generator)
+    plt.savefig("privacy_purely_privatize_merged_keys.png")
+
 
 def test_privacy_privatize_user_level():
     repetitions = 1000
@@ -575,6 +596,13 @@ def test_privacy_purely_privatize_user_level():
         title, repetitions, pmg.purely_privatize_user_level, sketch,
         neighbor_sketch, epsilon, delta, input_generator)
     plt.savefig("privacy_purely_privatize_user_level.png")
+
+    title = "Privacy of user-level pure privatization by keys"
+    plot_privatization_distribution(
+        title, repetitions,
+        lambda *args: list(pmg.purely_privatize_user_level(*args)), sketch,
+        neighbor_sketch, epsilon, delta, input_generator)
+    plt.savefig("privacy_purely_privatize_user_level_keys.png")
 
 
 def test():
