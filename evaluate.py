@@ -584,7 +584,8 @@ def test():
 
 def benchmark():
     """Run the benchmarks."""
-    benchmark_misra_gries()
+    benchmark_misra_gries_stream_length()
+    benchmark_misra_gries_sketch_size()
     benchmark_privatize()
     benchmark_purely_privatize()
     benchmark_merge()
