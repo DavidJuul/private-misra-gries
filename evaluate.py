@@ -418,8 +418,13 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
             neighbor_privates[neighbor_private] = 1
 
     # Scale the distribution according to the privacy.
+    delta_offset = delta * repetitions
     for private in privates:
-        privates[private] = math.exp(epsilon) * privates[private] + delta
+        privates[private] = (math.exp(epsilon) * privates[private]
+                             + delta_offset)
+    for neighbor_private in neighbor_privates:
+        if neighbor_private not in privates:
+            privates[neighbor_private] = delta_offset
 
     plt.bar(privates.keys(), privates.values(), alpha=0.5,
             label="Scaled distribution of privatized sketch")
