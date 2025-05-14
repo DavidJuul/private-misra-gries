@@ -155,3 +155,12 @@ class SketchGroup:
         self.elements = SortedList()
         self.prev = None
         self.next = None
+
+
+def find_threshold_original(epsilon, delta, sensitivity, max_unique_keys = 2):
+    return math.ceil(
+        1 + 2 * (sensitivity
+                 * math.log(2 * (max_unique_keys + 1)
+                            * math.exp(epsilon / sensitivity)
+                            / ((math.exp(epsilon / sensitivity) + 1) * delta))
+                 / epsilon))

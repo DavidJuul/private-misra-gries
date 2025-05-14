@@ -12,6 +12,7 @@ import math
 import random
 import time
 import unittest
+import unittest.mock
 
 import matplotlib.pyplot as plt
 
@@ -455,6 +456,14 @@ def test_privacy_privatize():
         epsilon, delta, input_generator)
     plt.savefig("privacy_privatize.png")
 
+    title = "Privacy of approximate privatization with original threshold"
+    with unittest.mock.patch("pmg.find_threshold",
+                             new=pmg_alternatives.find_threshold_original):
+        plot_privatization_distribution(
+            title, repetitions, pmg.privatize_misra_gries, sketch,
+            neighbor_sketch, epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize_original_threshold.png")
+
 
 def test_privacy_purely_privatize():
     repetitions = 2000
@@ -492,6 +501,15 @@ def test_privacy_privatize_merged():
         title, repetitions, pmg.privatize_merged, merged, neighbor_merged,
         epsilon, delta, input_generator)
     plt.savefig("privacy_privatize_merged.png")
+
+    title = ("Privacy of approximate privatization of merged with original "
+             "threshold")
+    with unittest.mock.patch("pmg.find_threshold",
+                             new=pmg_alternatives.find_threshold_original):
+        plot_privatization_distribution(
+            title, repetitions, pmg.privatize_merged, merged, neighbor_merged,
+            epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize_merged_original_threshold.png")
 
 
 def test_privacy_purely_privatize_merged():
