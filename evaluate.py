@@ -214,6 +214,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     plt.xlabel("Sketch distribution")
     plt.xticks([])
     plt.ylabel("Count")
+    plt.yscale("log")
 
     # Count the occurring privatized sketches.
     privates = {}
@@ -231,14 +232,21 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
         else:
             neighbor_privates[neighbor_private] = 1
 
-    # Scale the distribution according to the privacy.
+    # Scale the distribution according to the privacy, and count amount of
+    # privacy deviations.
     delta_offset = delta * repetitions
+    deviations = 0
     for private in privates:
         privates[private] = (math.exp(epsilon) * privates[private]
                              + delta_offset)
     for neighbor_private in neighbor_privates:
         if neighbor_private not in privates:
             privates[neighbor_private] = delta_offset
+        if neighbor_privates[neighbor_private] > privates[neighbor_private]:
+            deviations += 1
+
+    print("{} had {}/{}={} privacy deviations.".format(
+        title, deviations, repetitions, deviations / repetitions))
 
     # Sort the distribution from most to least occurrences.
     privates = dict(sorted(privates.items(), key=lambda item: item[1],
