@@ -258,7 +258,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
             label="Scaled distribution of privatized sketch")
     plt.bar(neighbor_privates.keys(), neighbor_privates.values(), alpha=0.5,
             label="Distribution of privatized neighbor sketch")
-    plt.legend()
+    plt.legend(loc="upper right")
 
 
 def benchmark_misra_gries_stream_length():
@@ -284,7 +284,7 @@ def benchmark_misra_gries_stream_length():
     plot_benchmark(title, "Zero-group version (final)", repetitions,
                    pmg.misra_gries, stream_lengths,
                    input_generator_without_repeats)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_misra_gries_stream_without_repeats.png")
 
     # Benchmark on input with repating elements.
@@ -305,7 +305,7 @@ def benchmark_misra_gries_stream_length():
     plot_benchmark(title, "Zero-group version (final)", repetitions,
                    pmg.misra_gries, stream_lengths,
                    input_generator_with_repeats)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_misra_gries_stream_with_repeats.png")
 
 
@@ -332,7 +332,7 @@ def benchmark_misra_gries_sketch_size():
     plot_benchmark(title, "Zero-group version (final)", repetitions,
                    pmg.misra_gries, sketch_sizes,
                    input_generator_without_repeats)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_misra_gries_sketch_without_repeats.png")
 
     # Benchmark on input with repating elements.
@@ -353,7 +353,7 @@ def benchmark_misra_gries_sketch_size():
     plot_benchmark(title, "Zero-group version (final)", repetitions,
                    pmg.misra_gries, sketch_sizes,
                    input_generator_with_repeats)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_misra_gries_sketch_with_repeats.png")
 
 
@@ -378,7 +378,7 @@ def benchmark_privatize():
     pmg.random = default_random
     plot_benchmark(title, "Cryptographic sampling (final)", repetitions,
                    pmg.privatize_misra_gries, sketch_sizes, input_generator)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_privatize.png")
 
 
@@ -406,7 +406,7 @@ def benchmark_purely_privatize():
     plot_benchmark(title, "Optimized version (final)", repetitions,
                    pmg.purely_privatize_misra_gries, universe_sizes,
                    input_generator)
-    plt.legend()
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_purely_privatize.png")
 
 
