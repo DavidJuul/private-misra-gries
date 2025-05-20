@@ -492,11 +492,12 @@ def benchmark_find_threshold():
 
 
 def test_privacy_privatize():
+    # repetitions = 10000
     repetitions = 1000
     sketch = {0: 140, 1: 70, 2: 1, 3: 0}
     neighbor_sketch = {0: 140, 1: 70, 4: 0, 5: 0}
     epsilon = 1
-    delta = 0.01
+    delta = 1 / repetitions / 10
 
     def input_generator(sketch):
         return sketch, epsilon, delta
@@ -523,18 +524,21 @@ def test_privacy_privatize():
 
 
 def test_privacy_purely_privatize():
+    # repetitions = 20000
     repetitions = 2000
     sketch = {0: 40, 1: 1, 2: 0}
     neighbor_sketch = {0: 40, 3: 0, 4: 0}
     sketch_size = len(sketch)
-    epsilon = 1
+    epsilon = 2
     delta = 0
-    universe_size = 15
-    element_count = 221
-    decrement_count = 10
+    universe_size = 11
+    element_count = 9 + sketch[0]
+    decrement_count = 2
 
     def input_generator(sketch):
-        return (sketch, sketch_size, epsilon, universe_size, element_count,
+        _element_count = (element_count - 1 if sketch == neighbor_sketch
+                          else element_count)
+        return (sketch, sketch_size, epsilon, universe_size, _element_count,
                 decrement_count)
     title = "Privacy of pure privatization"
     plot_privatization_distribution(
@@ -551,12 +555,13 @@ def test_privacy_purely_privatize():
 
 
 def test_privacy_privatize_merged():
+    # repetitions = 10000
     repetitions = 1000
     merged = {0: 140, 1: 70, 2: 1, 3: 0}
     neighbor_merged = {0: 140, 1: 70, 4: 0, 5: 0}
     merged_size = len(merged)
     epsilon = 1
-    delta = 0.01
+    delta = 1 / repetitions / 10
 
     def input_generator(merged):
         return merged, merged_size, epsilon, delta
@@ -577,13 +582,14 @@ def test_privacy_privatize_merged():
 
 
 def test_privacy_purely_privatize_merged():
-    repetitions = 1000
+    # repetitions = 20000
+    repetitions = 2000
     merged = {0: 40, 1: 1, 2: 0}
     neighbor_merged = {0: 40, 3: 0, 4: 0}
     merged_size = len(merged)
-    epsilon = 1
+    epsilon = 2
     delta = 0
-    universe_size = 15
+    universe_size = 11
 
     def input_generator(merged):
         return merged, merged_size, epsilon, universe_size
@@ -602,11 +608,12 @@ def test_privacy_purely_privatize_merged():
 
 
 def test_privacy_privatize_user_level():
+    # repetitions = 10000
     repetitions = 1000
     sketch = {0: 140, 1: 70, 2: 1, 3: 0}
     neighbor_sketch = {0: 140, 1: 70, 4: 0, 5: 0}
     epsilon = 1
-    delta = 0.01
+    delta = 1 / repetitions / 10
     user_element_count = 5
 
     def input_generator(sketch):
@@ -619,19 +626,22 @@ def test_privacy_privatize_user_level():
 
 
 def test_privacy_purely_privatize_user_level():
-    repetitions = 1000
+    # repetitions = 20000
+    repetitions = 2000
     sketch = {0: 40, 1: 1, 2: 0}
     neighbor_sketch = {0: 40, 3: 0, 4: 0}
     sketch_size = len(sketch)
-    epsilon = 1
+    epsilon = 2
     delta = 0
-    universe_size = 15
-    element_count = 221
-    decrement_count = 10
-    user_element_count = 5
+    universe_size = 11
+    element_count = 9 + sketch[0]
+    decrement_count = 2
+    user_element_count = 3
 
     def input_generator(sketch):
-        return (sketch, sketch_size, epsilon, universe_size, element_count,
+        _element_count = (element_count - 1 if sketch == neighbor_sketch
+                          else element_count)
+        return (sketch, sketch_size, epsilon, universe_size, _element_count,
                 decrement_count, user_element_count)
     title = "Privacy of user-level pure privatization"
     plot_privatization_distribution(
