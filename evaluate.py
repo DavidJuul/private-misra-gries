@@ -208,7 +208,8 @@ def plot_benchmark(title, label, repetitions, function, input_lengths,
 
 def plot_privatization_distribution(title, repetitions, function, sketch,
                                     neighbor_sketch, epsilon, delta,
-                                    input_generator):
+                                    input_generator,
+                                    purely_privatization_offset = 0):
     print("Testing {}...".format(title))
     plt.clf()
     plt.title(title)
@@ -221,7 +222,8 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     # sketch's first counter.
     privates = {}
     neighbor_privates = {}
-    original_first = next(iter(sketch.items()))
+    original_first = list(next(iter(sketch.items())))
+    original_first[1] += purely_privatization_offset
     original_first_releases = 0
     neighbor_original_first_releases = 0
     for _ in range(repetitions):
@@ -534,6 +536,8 @@ def test_privacy_purely_privatize():
     universe_size = 11
     element_count = 9 + sketch[0]
     decrement_count = 2
+    privatization_offset = (decrement_count
+                            - math.floor(element_count / (sketch_size + 1)))
 
     def input_generator(sketch):
         _element_count = (element_count - 1 if sketch == neighbor_sketch
@@ -543,14 +547,14 @@ def test_privacy_purely_privatize():
     title = "Privacy of pure privatization"
     plot_privatization_distribution(
         title, repetitions, pmg.purely_privatize_misra_gries, sketch,
-        neighbor_sketch, epsilon, delta, input_generator)
+        neighbor_sketch, epsilon, delta, input_generator, privatization_offset)
     plt.savefig("privacy_purely_privatize.png")
 
     title = "Privacy of pure privatization by keys"
     plot_privatization_distribution(
         title, repetitions,
         lambda *args: list(pmg.purely_privatize_misra_gries(*args)), sketch,
-        neighbor_sketch, epsilon, delta, input_generator)
+        neighbor_sketch, epsilon, delta, input_generator, privatization_offset)
     plt.savefig("privacy_purely_privatize_keys.png")
 
 
@@ -637,6 +641,8 @@ def test_privacy_purely_privatize_user_level():
     element_count = 9 + sketch[0]
     decrement_count = 2
     user_element_count = 3
+    privatization_offset = (decrement_count
+                            - math.floor(element_count / (sketch_size + 1)))
 
     def input_generator(sketch):
         _element_count = (element_count - 1 if sketch == neighbor_sketch
@@ -646,14 +652,14 @@ def test_privacy_purely_privatize_user_level():
     title = "Privacy of user-level pure privatization"
     plot_privatization_distribution(
         title, repetitions, pmg.purely_privatize_user_level, sketch,
-        neighbor_sketch, epsilon, delta, input_generator)
+        neighbor_sketch, epsilon, delta, input_generator, privatization_offset)
     plt.savefig("privacy_purely_privatize_user_level.png")
 
     title = "Privacy of user-level pure privatization by keys"
     plot_privatization_distribution(
         title, repetitions,
         lambda *args: list(pmg.purely_privatize_user_level(*args)), sketch,
-        neighbor_sketch, epsilon, delta, input_generator)
+        neighbor_sketch, epsilon, delta, input_generator, privatization_offset)
     plt.savefig("privacy_purely_privatize_user_level_keys.png")
 
 
