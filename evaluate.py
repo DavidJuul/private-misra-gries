@@ -15,6 +15,7 @@ import unittest
 import unittest.mock
 
 import matplotlib.pyplot as plt
+import scipy.stats
 
 import pmg
 import pmg_alternatives
@@ -250,6 +251,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     # privacy deviations.
     delta_offset = delta * repetitions
     deviations = 0
+    wilson_violations = 0
     for private in privates:
         privates[private] = (math.exp(epsilon) * privates[private]
                              + delta_offset)
@@ -257,10 +259,18 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
         if neighbor_private not in privates:
             privates[neighbor_private] = delta_offset
         if neighbor_privates[neighbor_private] > privates[neighbor_private]:
+            lower_bound = wilson_interval(privates[neighbor_private],
+                                          repetitions)[0]
+            upper_bound = wilson_interval(neighbor_privates[neighbor_private],
+                                          repetitions)[1]
+            if lower_bound / upper_bound > math.exp(epsilon):
+                wilson_violations += 1
             deviations += 1
 
     print("{} had {}/{}={} privacy deviations.".format(
         title, deviations, repetitions, deviations / repetitions))
+    print("{} had {} Wilson-based privacy violations.".format(
+        title, wilson_violations))
     original_first_release_ratio = (original_first_releases
                                     / max(neighbor_original_first_releases, 1))
     print("{} had {}/{}{}e^epsilon accurate releases of the first counter."
@@ -280,6 +290,17 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     plt.bar(neighbor_privates.keys(), neighbor_privates.values(), alpha=0.5,
             label="Distribution of privatized neighbor sketch")
     plt.legend(loc="upper right")
+
+
+def wilson_interval(occurrences, experiments, alpha = 0.01):
+    proportion = occurrences / experiments
+    critical = scipy.stats.norm.ppf(1 - alpha / 2)
+    denominator = 1 + critical ** 2 / experiments
+    center = proportion + critical ** 2 / (2 * experiments)
+    margin = critical * math.sqrt(proportion * (1 - proportion) / experiments + critical ** 2 / (4 * experiments ** 2))
+    lower = (center - margin) / denominator
+    upper = (center + margin) / denominator
+    return lower, upper
 
 
 def benchmark_misra_gries_stream_length():
