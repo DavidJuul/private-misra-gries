@@ -216,17 +216,31 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     plt.ylabel("Count")
     plt.yscale("log")
 
-    # Count the occurring privatized sketches.
+    # Count the occurring privatized sketches and the accurate releases of the
+    # sketch's first counter.
     privates = {}
     neighbor_privates = {}
+    original_first = next(iter(sketch.items()))
+    original_first_releases = 0
+    neighbor_original_first_releases = 0
     for _ in range(repetitions):
-        private = json.dumps(function(*input_generator(sketch)))
+        private = function(*input_generator(sketch))
+        if (original_first[0] in private
+            and (not isinstance(private, dict)
+                 or private[original_first[0]] == original_first[1])):
+            original_first_releases += 1
+        private = json.dumps(private)
         if private in privates:
             privates[private] += 1
         else:
             privates[private] = 1
-        neighbor_private = json.dumps(
-            function(*input_generator(neighbor_sketch)))
+
+        neighbor_private = function(*input_generator(neighbor_sketch))
+        if (original_first[0] in neighbor_private
+            and (not isinstance(neighbor_private, dict)
+                 or neighbor_private[original_first[0]] == original_first[1])):
+            neighbor_original_first_releases += 1
+        neighbor_private = json.dumps(neighbor_private)
         if neighbor_private in neighbor_privates:
             neighbor_privates[neighbor_private] += 1
         else:
@@ -247,6 +261,13 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
 
     print("{} had {}/{}={} privacy deviations.".format(
         title, deviations, repetitions, deviations / repetitions))
+    original_first_release_ratio = (original_first_releases
+                                    / max(neighbor_original_first_releases, 1))
+    print("{} had {}/{}{}e^epsilon accurate releases of the first counter."
+          "".format(
+              title, original_first_releases, neighbor_original_first_releases,
+              "<" if original_first_release_ratio < math.exp(epsilon) else ">"
+    ))
 
     # Sort the distribution from most to least occurrences.
     privates = dict(sorted(privates.items(), key=lambda item: item[1],
@@ -451,8 +472,8 @@ def benchmark_find_threshold():
 
 def test_privacy_privatize():
     repetitions = 1000
-    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
-    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    sketch = {0: 140, 1: 70, 2: 1, 3: 0}
+    neighbor_sketch = {0: 140, 1: 70, 4: 0, 5: 0}
     epsilon = 1
     delta = 0.01
 
@@ -482,8 +503,8 @@ def test_privacy_privatize():
 
 def test_privacy_purely_privatize():
     repetitions = 2000
-    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
-    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    sketch = {0: 40, 1: 1, 2: 0}
+    neighbor_sketch = {0: 40, 3: 0, 4: 0}
     sketch_size = len(sketch)
     epsilon = 1
     delta = 0
@@ -510,8 +531,8 @@ def test_privacy_purely_privatize():
 
 def test_privacy_privatize_merged():
     repetitions = 1000
-    merged = {1: 140, 2: 1, 3: 70, 4: 0}
-    neighbor_merged = {1: 140, 3: 70, 5: 0, 6: 0}
+    merged = {0: 140, 1: 70, 2: 1, 3: 0}
+    neighbor_merged = {0: 140, 1: 70, 4: 0, 5: 0}
     merged_size = len(merged)
     epsilon = 1
     delta = 0.01
@@ -536,8 +557,8 @@ def test_privacy_privatize_merged():
 
 def test_privacy_purely_privatize_merged():
     repetitions = 1000
-    merged = {1: 140, 2: 1, 3: 70, 4: 0}
-    neighbor_merged = {1: 140, 3: 70, 5: 0, 6: 0}
+    merged = {0: 40, 1: 1, 2: 0}
+    neighbor_merged = {0: 40, 3: 0, 4: 0}
     merged_size = len(merged)
     epsilon = 1
     delta = 0
@@ -561,8 +582,8 @@ def test_privacy_purely_privatize_merged():
 
 def test_privacy_privatize_user_level():
     repetitions = 1000
-    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
-    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    sketch = {0: 140, 1: 70, 2: 1, 3: 0}
+    neighbor_sketch = {0: 140, 1: 70, 4: 0, 5: 0}
     epsilon = 1
     delta = 0.01
     user_element_count = 5
@@ -578,8 +599,8 @@ def test_privacy_privatize_user_level():
 
 def test_privacy_purely_privatize_user_level():
     repetitions = 1000
-    sketch = {1: 140, 2: 1, 3: 70, 4: 0}
-    neighbor_sketch = {1: 140, 3: 70, 5: 0, 6: 0}
+    sketch = {0: 40, 1: 1, 2: 0}
+    neighbor_sketch = {0: 40, 3: 0, 4: 0}
     sketch_size = len(sketch)
     epsilon = 1
     delta = 0
