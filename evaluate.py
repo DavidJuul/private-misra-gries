@@ -524,6 +524,14 @@ def test_privacy_privatize():
         neighbor_sketch, epsilon, delta, input_generator)
     plt.savefig("privacy_privatize_keys.png")
 
+    sketch = {0: 99, 1: 49, 2: 29, 3: 79}
+    neighbor_sketch = {0: 100, 1: 50, 2: 30, 3: 80}
+    title = "Privacy of approximate privatization lowered counters"
+    plot_privatization_distribution(
+        title, repetitions, pmg.privatize_misra_gries, sketch, neighbor_sketch,
+        epsilon, delta, input_generator)
+    plt.savefig("privacy_privatize_lowered.png")
+
 
 def test_privacy_purely_privatize():
     # repetitions = 20000
@@ -556,6 +564,27 @@ def test_privacy_purely_privatize():
         lambda *args: list(pmg.purely_privatize_misra_gries(*args)), sketch,
         neighbor_sketch, epsilon, delta, input_generator, privatization_offset)
     plt.savefig("privacy_purely_privatize_keys.png")
+
+    sketch = {0: 39, 1: 19, 2: 29}
+    neighbor_sketch = {0: 40, 1: 20, 2: 30}
+    sketch_size = len(sketch)
+    element_count = sum(neighbor_sketch.values()) + 1
+    decrement_count = 1
+    privatization_offset = (decrement_count
+                            - math.floor(element_count / (sketch_size + 1)))
+    def input_generator2(sketch):
+        _element_count = (element_count - 1 if sketch == neighbor_sketch
+                          else element_count)
+        _decrement_count = (decrement_count - 1 if sketch == neighbor_sketch
+                          else decrement_count)
+        return (sketch, sketch_size, epsilon, universe_size, _element_count,
+                _decrement_count)
+    title = "Privacy of pure privatization lowered counters"
+    plot_privatization_distribution(
+        title, repetitions, pmg.purely_privatize_misra_gries, sketch,
+        neighbor_sketch, epsilon, delta, input_generator2,
+        privatization_offset)
+    plt.savefig("privacy_purely_privatize_lowered.png")
 
 
 def test_privacy_privatize_merged():
