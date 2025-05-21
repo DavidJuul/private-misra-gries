@@ -210,6 +210,9 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
                                     neighbor_sketch, epsilon, delta,
                                     input_generator,
                                     purely_privatization_offset = 0):
+    e_epsilon = math.exp(epsilon)
+    count_sums = isinstance(function(*input_generator(sketch)), dict)
+
     print("Testing {}...".format(title))
     plt.clf()
     plt.title(title)
@@ -218,20 +221,26 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     plt.ylabel("Count")
     plt.yscale("log")
 
-    # Count the occurring privatized sketches and the accurate releases of the
-    # sketch's first counter.
+    # Count the occurring privatized sketches, the accurate releases of the
+    # sketch's first counter, and the counter sums.
     privates = {}
     neighbor_privates = {}
     original_first = list(next(iter(sketch.items())))
     original_first[1] += purely_privatization_offset
     original_first_releases = 0
     neighbor_original_first_releases = 0
+    counter_sum = 0
+    neighbor_counter_sum = 0
+    sum_deviations = 0
     for _ in range(repetitions):
         private = function(*input_generator(sketch))
         if (original_first[0] in private
             and (not isinstance(private, dict)
                  or private[original_first[0]] == original_first[1])):
             original_first_releases += 1
+        if count_sums:
+            sum_ = sum(private.values())
+            counter_sum += sum_
         private = json.dumps(private)
         if private in privates:
             privates[private] += 1
@@ -243,6 +252,12 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
             and (not isinstance(neighbor_private, dict)
                  or neighbor_private[original_first[0]] == original_first[1])):
             neighbor_original_first_releases += 1
+        if count_sums:
+            neighbor_sum = sum(neighbor_private.values())
+            neighbor_counter_sum += neighbor_sum
+            sum_ratio = sum_ / neighbor_sum
+            if sum_ratio > e_epsilon or 1 / sum_ratio > e_epsilon:
+                sum_deviations += 1
         neighbor_private = json.dumps(neighbor_private)
         if neighbor_private in neighbor_privates:
             neighbor_privates[neighbor_private] += 1
@@ -261,10 +276,10 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
                                         repetitions)[0]
         upper_bound = wilson_interval(neighbor_privates[neighbor_private],
                                         repetitions)[1]
-        if lower_bound / upper_bound > math.exp(epsilon):
+        if lower_bound / upper_bound > e_epsilon:
             wilson_violations += 1
     for private in privates:
-        privates[private] = (math.exp(epsilon) * privates[private]
+        privates[private] = (e_epsilon * privates[private]
                              + delta_offset)
     for neighbor_private in neighbor_privates:
         if neighbor_privates[neighbor_private] > privates[neighbor_private]:
@@ -274,12 +289,22 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
         title, deviations, repetitions, deviations / repetitions))
     print("{} had {} Wilson-based privacy violations.".format(
         title, wilson_violations))
+    if count_sums:
+        total_sum_ratio = counter_sum / neighbor_counter_sum
+        print("{} had {} sum-based privacy deviations.".format(
+            title, sum_deviations))
+        print("{} had total sum ratio {}/{}{}e^epsilon.".format(
+            title, counter_sum, neighbor_counter_sum,
+            "<" if total_sum_ratio < e_epsilon
+            and 1 / total_sum_ratio < e_epsilon else ">"
+        ))
     original_first_release_ratio = (original_first_releases
                                     / max(neighbor_original_first_releases, 1))
     print("{} had {}/{}{}e^epsilon accurate releases of the first counter."
           "".format(
               title, original_first_releases, neighbor_original_first_releases,
-              "<" if original_first_release_ratio < math.exp(epsilon) else ">"
+              "<" if original_first_release_ratio < e_epsilon
+              and 1 / original_first_release_ratio < e_epsilon else ">"
     ))
 
     # Sort the distribution from most to least occurrences.
