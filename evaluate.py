@@ -231,7 +231,6 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     neighbor_privates = {}
     counter_sum = 0
     neighbor_counter_sum = 0
-    sum_deviations = 0
     original_first = list(next(iter(sketch.items())))
     original_first[1] += purely_privatization_offset
     original_first_releases = 0
@@ -241,8 +240,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     for _ in range(repetitions):
         private = function(*input_generator(sketch))
         if count_sums:
-            sum_ = sum(private.values())
-            counter_sum += sum_
+            counter_sum += sum(private.values())
         if (original_first[0] in private
             and (not isinstance(private, dict)
                  or private[original_first[0]] == original_first[1])):
@@ -257,11 +255,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
 
         neighbor_private = function(*input_generator(neighbor_sketch))
         if count_sums:
-            neighbor_sum = sum(neighbor_private.values())
-            neighbor_counter_sum += neighbor_sum
-            sum_ratio = sum_ / neighbor_sum
-            if sum_ratio > e_epsilon or 1 / sum_ratio > e_epsilon:
-                sum_deviations += 1
+            neighbor_counter_sum += sum(neighbor_private.values())
         if (original_first[0] in neighbor_private
             and (not isinstance(neighbor_private, dict)
                  or neighbor_private[original_first[0]] == original_first[1])):
@@ -301,8 +295,6 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
         title, wilson_violations))
     if count_sums:
         total_sum_ratio = counter_sum / neighbor_counter_sum
-        print("{} had {} sum-based privacy deviations.".format(
-            title, sum_deviations))
         print("{} had total sum ratio {}/{}{}e^epsilon.".format(
             title, counter_sum, neighbor_counter_sum,
             "<" if total_sum_ratio <= e_epsilon
