@@ -254,19 +254,20 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     delta_offset = delta * repetitions
     deviations = 0
     wilson_violations = 0
+    for neighbor_private in neighbor_privates:
+        if neighbor_private not in privates:
+            privates[neighbor_private] = 0
+        lower_bound = wilson_interval(privates[neighbor_private],
+                                        repetitions)[0]
+        upper_bound = wilson_interval(neighbor_privates[neighbor_private],
+                                        repetitions)[1]
+        if lower_bound / upper_bound > math.exp(epsilon):
+            wilson_violations += 1
     for private in privates:
         privates[private] = (math.exp(epsilon) * privates[private]
                              + delta_offset)
     for neighbor_private in neighbor_privates:
-        if neighbor_private not in privates:
-            privates[neighbor_private] = delta_offset
         if neighbor_privates[neighbor_private] > privates[neighbor_private]:
-            lower_bound = wilson_interval(privates[neighbor_private],
-                                          repetitions)[0]
-            upper_bound = wilson_interval(neighbor_privates[neighbor_private],
-                                          repetitions)[1]
-            if lower_bound / upper_bound > math.exp(epsilon):
-                wilson_violations += 1
             deviations += 1
 
     print("{} had {}/{}={} privacy deviations.".format(
