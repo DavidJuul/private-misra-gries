@@ -17,13 +17,17 @@ RANDOM = random.SystemRandom()
 def misra_gries_unoptimized(stream, sketch_size):
     """Calculate the Misra-Gries sketch of the given stream."""
     sketch = {key: 0 for key in range(-1, -sketch_size - 1, -1)}
+    element_count = 0
+    decrement_count = 0
 
     for element in stream:
         if element < 0:
             continue
+        element_count += 1
         if element in sketch:
             sketch[element] += 1
         elif all(map(lambda x: sketch[x] >= 1, sketch)):
+            decrement_count += 1
             for key in sketch:
                 sketch[key] -= 1
         else:
@@ -38,11 +42,13 @@ def misra_gries_unoptimized(stream, sketch_size):
         if key >= 0:
             final_sketch[key] = sketch[key]
 
-    return final_sketch
+    return final_sketch, element_count, decrement_count
 
 
 def misra_gries_with_groups(stream, sketch_size):
     """Calculate the Misra-Gries sketch of the given stream."""
+    element_count = 0
+    decrement_count = 0
     first_group = SketchGroup(0)
     first_group.elements = SortedList(range(-sketch_size, 0))
     sketch = {key: SketchElement(first_group) for key in range(-sketch_size, 0)}
@@ -50,6 +56,7 @@ def misra_gries_with_groups(stream, sketch_size):
     for key in stream:
         if key < 0:
             continue
+        element_count += 1
         if key in sketch:
             element = sketch[key]
             if len(element.group.elements) == 1 and (not element.group.next
@@ -84,6 +91,7 @@ def misra_gries_with_groups(stream, sketch_size):
                     first_group = first_group.next
                 element.group.elements.add(key)
         elif first_group.count_diff >= 1:
+            decrement_count += 1
             first_group.count_diff -= 1
         else:
             min_zero_key = first_group.elements.pop(0)
@@ -117,7 +125,7 @@ def misra_gries_with_groups(stream, sketch_size):
         if key >= 0:
             final_sketch[key] = sketch[key]
 
-    return final_sketch
+    return final_sketch, element_count, decrement_count
 
 
 def purely_privatize_misra_gries_unoptimized(sketch, sketch_size, epsilon,

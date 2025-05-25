@@ -92,18 +92,24 @@ class TestMisraGries(unittest.TestCase):
             self.assertTupleEqual(output, expected_output)
             unoptimized_output = pmg_alternatives.misra_gries_unoptimized(
                 stream, sketch_size)
-            self.assertDictEqual(unoptimized_output, expected_output[0])
+            self.assertTupleEqual(unoptimized_output, expected_output)
             with_groups_output = pmg_alternatives.misra_gries_with_groups(
                 stream, sketch_size)
-            self.assertDictEqual(with_groups_output, expected_output[0])
+            self.assertTupleEqual(with_groups_output, expected_output)
 
     def test_max_decrement_count(self):
         unique_elements = 100
         stream = range(1, unique_elements + 1)
         sketch_size = 10
-        _, _, decrement_count = pmg.misra_gries(stream, sketch_size)
         max_decrements = unique_elements // (sketch_size + 1)
+        _, _, decrement_count = pmg.misra_gries(stream, sketch_size)
         self.assertEqual(decrement_count, max_decrements)
+        _, _, unoptimized_decrement_count = (
+            pmg_alternatives.misra_gries_unoptimized(stream, sketch_size))
+        self.assertEqual(unoptimized_decrement_count, max_decrements)
+        _, _, with_groups_decrement_count = (
+            pmg_alternatives.misra_gries_with_groups(stream, sketch_size))
+        self.assertEqual(with_groups_decrement_count, max_decrements)
 
 
 class TestPrivatizeMisraGries(unittest.TestCase):
