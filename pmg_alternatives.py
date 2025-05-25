@@ -14,9 +14,9 @@ from sortedcontainers import SortedList
 RANDOM = random.SystemRandom()
 
 
-def misra_gries_unoptimized(stream, stream_size):
+def misra_gries_unoptimized(stream, sketch_size):
     """Calculate the Misra-Gries sketch of the given stream."""
-    sketch = {key: 0 for key in range(-1, -stream_size - 1, -1)}
+    sketch = {key: 0 for key in range(-1, -sketch_size - 1, -1)}
 
     for element in stream:
         if element in sketch:
@@ -38,11 +38,11 @@ def misra_gries_unoptimized(stream, stream_size):
     return sketch
 
 
-def misra_gries_with_groups(stream, stream_size):
+def misra_gries_with_groups(stream, sketch_size):
     """Calculate the Misra-Gries sketch of the given stream."""
     first_group = SketchGroup(0)
-    first_group.elements = SortedList(range(-stream_size, 0))
-    sketch = {key: SketchElement(first_group) for key in range(-stream_size, 0)}
+    first_group.elements = SortedList(range(-sketch_size, 0))
+    sketch = {key: SketchElement(first_group) for key in range(-sketch_size, 0)}
 
     for key in stream:
         if key in sketch:
