@@ -411,14 +411,14 @@ def find_threshold(epsilon: float,
         The necessary threshold that hides the difference in unique stored keys
         between neighboring sketches under approximate privacy.
     """
-    def pmf(j: int):
+    def pmf(j: int) -> float:
         # Return the probability that a two-sided geometric variable is equal
         # to any integer j.
         return ((1 - math.exp(-epsilon / sensitivity))
                 / (1 + math.exp(-epsilon / sensitivity))
                 * math.exp(-epsilon * abs(j) / sensitivity))
 
-    def cdf(j: int):
+    def cdf(j: int) -> float:
         # Return the probability that a two-sided geometric variable is greater
         # than or equal to any integer j.
         j2 = -j + 1 if j < 0 else j
