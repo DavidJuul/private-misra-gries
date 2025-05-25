@@ -19,6 +19,8 @@ def misra_gries_unoptimized(stream, sketch_size):
     sketch = {key: 0 for key in range(-1, -sketch_size - 1, -1)}
 
     for element in stream:
+        if element < 0:
+            continue
         if element in sketch:
             sketch[element] += 1
         elif all(map(lambda x: sketch[x] >= 1, sketch)):
@@ -31,11 +33,12 @@ def misra_gries_unoptimized(stream, sketch_size):
             del sketch[key]
             sketch[element] = 1
 
-    for key in sketch:
-        if key < 0:
-            del sketch[key]
+    final_sketch = {}
+    for key in sorted(sketch):
+        if key >= 0:
+            final_sketch[key] = sketch[key]
 
-    return sketch
+    return final_sketch
 
 
 def misra_gries_with_groups(stream, sketch_size):
@@ -45,6 +48,8 @@ def misra_gries_with_groups(stream, sketch_size):
     sketch = {key: SketchElement(first_group) for key in range(-sketch_size, 0)}
 
     for key in stream:
+        if key < 0:
+            continue
         if key in sketch:
             element = sketch[key]
             if len(element.group.elements) == 1 and (not element.group.next
