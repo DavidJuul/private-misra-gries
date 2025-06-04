@@ -285,7 +285,6 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
 
     # Scale the distribution according to the privacy, and count amount of
     # privacy deviations.
-    delta_offset = delta * repetitions
     deviations = 0
     wilson_violations = 0
     for neighbor_private in neighbor_privates:
@@ -298,11 +297,11 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
         if lower_bound / upper_bound > e_epsilon:
             wilson_violations += 1
     for private in privates:
-        privates[private] = (e_epsilon * privates[private]
-                             + delta_offset)
+        privates[private] = e_epsilon * privates[private]
     for neighbor_private in neighbor_privates:
         if neighbor_privates[neighbor_private] > privates[neighbor_private]:
-            deviations += 1
+            deviations += math.ceil(neighbor_privates[neighbor_private]
+                                    - privates[neighbor_private])
 
     print("{} had {}/{}={} privacy deviations.".format(
         title, deviations, repetitions, deviations / repetitions))
