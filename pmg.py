@@ -354,9 +354,10 @@ def purely_privatize_user_level(sketch: dict[int, int],
     Returns:
         The user-level purely privatized Misra-Gries sketch.
     """
-    return purely_privatize_misra_gries(sketch, sketch_size, epsilon,
+    scaled_epsilon = epsilon / user_element_count
+    return purely_privatize_misra_gries(sketch, sketch_size, scaled_epsilon,
                                         universe_size, element_count,
-                                        decrement_count, user_element_count)
+                                        decrement_count)
 
 
 def create_geometric(epsilon: float,

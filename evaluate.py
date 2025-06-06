@@ -768,8 +768,8 @@ def test_privacy_purely_privatize_merged():
 def test_privacy_privatize_user_level():
     # repetitions = 10000
     repetitions = 1000
-    sketch = {0: 60, 1: 30, 2: 40}
-    neighbor_sketch = {0: 57, 1: 29, 2: 39}
+    sketch = {0: 60, 1: 30}
+    neighbor_sketch = {0: 57, 1: 29}
     epsilon = 1
     delta = 1 / (sum(sketch.values()) - 1 + 9) / 10
     user_element_count = sum(sketch.values()) - sum(neighbor_sketch.values())
@@ -793,21 +793,21 @@ def test_privacy_privatize_user_level():
 def test_privacy_purely_privatize_user_level():
     # repetitions = 20000
     repetitions = 2000
-    sketch = {0: 60, 1: 30, 2: 40}
-    neighbor_sketch = {0: 57, 1: 29, 2: 39}
+    sketch = {0: 60, 1: 30}
+    neighbor_sketch = {0: 57, 1: 29}
     sketch_size = len(sketch)
     epsilon = 2
     delta = 0
     universe_size = 12
-    element_count = 9 + sketch[0]
-    decrement_count = 2
+    element_count = sum(sketch.values())
+    decrement_count = 0
     user_element_count = sum(sketch.values()) - sum(neighbor_sketch.values())
     privatization_offset = (decrement_count
                             - math.floor(element_count / (sketch_size + 1)))
 
     def input_generator(sketch):
-        _element_count = (element_count - 1 if sketch == neighbor_sketch
-                          else element_count)
+        _element_count = (element_count - user_element_count
+                          if sketch == neighbor_sketch else element_count)
         return (sketch, sketch_size, epsilon, universe_size, _element_count,
                 decrement_count, user_element_count)
     title = "Privacy of user-level pure privatization"
