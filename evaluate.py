@@ -566,7 +566,7 @@ def test_privacy_privatize():
     sketch = {0: 140, 1: 70, 2: 1, 3: 0}
     neighbor_sketch = {0: 140, 1: 70, 4: 0, 5: 0}
     epsilon = 1
-    delta = 1 / repetitions / 10
+    delta = 1 / (sum(sketch.values()) - 1 + 9) / 10
 
     def input_generator(sketch):
         return sketch, epsilon, delta
@@ -591,8 +591,8 @@ def test_privacy_privatize():
         neighbor_sketch, epsilon, delta, input_generator)
     plt.savefig("privacy_privatize_keys.png")
 
-    sketch = {0: 99, 1: 49, 2: 29, 3: 79}
-    neighbor_sketch = {0: 100, 1: 50, 2: 30, 3: 80}
+    sketch = {0: 99, 1: 49}
+    neighbor_sketch = {0: 100, 1: 50}
     title = "Privacy of approximate privatization lowered counters"
     plot_privatization_distribution(
         title, repetitions, pmg.privatize_misra_gries, sketch, neighbor_sketch,
@@ -608,7 +608,7 @@ def test_privacy_purely_privatize():
     sketch_size = len(sketch)
     epsilon = 2
     delta = 0
-    universe_size = 11
+    universe_size = 12
     element_count = 9 + sketch[0]
     decrement_count = 2
     privatization_offset = (decrement_count
@@ -632,8 +632,8 @@ def test_privacy_purely_privatize():
         neighbor_sketch, epsilon, delta, input_generator, privatization_offset)
     plt.savefig("privacy_purely_privatize_keys.png")
 
-    sketch = {0: 39, 1: 19, 2: 29}
-    neighbor_sketch = {0: 40, 1: 20, 2: 30}
+    sketch = {0: 39, 1: 29}
+    neighbor_sketch = {0: 40, 1: 30}
     sketch_size = len(sketch)
     element_count = sum(neighbor_sketch.values()) + 1
     decrement_count = 1
@@ -657,11 +657,11 @@ def test_privacy_purely_privatize():
 def test_privacy_privatize_merged():
     # repetitions = 10000
     repetitions = 1000
-    merged = {0: 140, 1: 70, 2: 1, 3: 0}
-    neighbor_merged = {0: 140, 1: 70, 4: 0, 5: 0}
+    merged = {0: 60, 1: 30, 2: 40}
+    neighbor_merged = {0: 59, 1: 29, 2: 39}
     merged_size = len(merged)
     epsilon = 1
-    delta = 1 / repetitions / 10
+    delta = 1 / (sum(merged.values()) - 1 + 9) / 10
 
     def input_generator(merged):
         return merged, merged_size, epsilon, delta
@@ -684,12 +684,12 @@ def test_privacy_privatize_merged():
 def test_privacy_purely_privatize_merged():
     # repetitions = 20000
     repetitions = 2000
-    merged = {0: 40, 1: 1, 2: 0}
-    neighbor_merged = {0: 40, 3: 0, 4: 0}
+    merged = {0: 60, 1: 30, 2: 40}
+    neighbor_merged = {0: 59, 1: 29, 2: 39}
     merged_size = len(merged)
     epsilon = 2
     delta = 0
-    universe_size = 11
+    universe_size = 12
 
     def input_generator(merged):
         return merged, merged_size, epsilon, universe_size
@@ -710,11 +710,11 @@ def test_privacy_purely_privatize_merged():
 def test_privacy_privatize_user_level():
     # repetitions = 10000
     repetitions = 1000
-    sketch = {0: 140, 1: 70, 2: 1, 3: 0}
-    neighbor_sketch = {0: 140, 1: 70, 4: 0, 5: 0}
+    sketch = {0: 60, 1: 30, 2: 40}
+    neighbor_sketch = {0: 57, 1: 29, 2: 39}
     epsilon = 1
-    delta = 1 / repetitions / 10
-    user_element_count = 5
+    delta = 1 / (sum(sketch.values()) - 1 + 9) / 10
+    user_element_count = sum(sketch.values()) - sum(neighbor_sketch.values())
 
     def input_generator(sketch):
         return sketch, epsilon, delta, user_element_count
@@ -728,15 +728,15 @@ def test_privacy_privatize_user_level():
 def test_privacy_purely_privatize_user_level():
     # repetitions = 20000
     repetitions = 2000
-    sketch = {0: 40, 1: 1, 2: 0}
-    neighbor_sketch = {0: 40, 3: 0, 4: 0}
+    sketch = {0: 60, 1: 30, 2: 40}
+    neighbor_sketch = {0: 57, 1: 29, 2: 39}
     sketch_size = len(sketch)
     epsilon = 2
     delta = 0
-    universe_size = 11
+    universe_size = 12
     element_count = 9 + sketch[0]
     decrement_count = 2
-    user_element_count = 3
+    user_element_count = sum(sketch.values()) - sum(neighbor_sketch.values())
     privatization_offset = (decrement_count
                             - math.floor(element_count / (sketch_size + 1)))
 
@@ -792,7 +792,7 @@ def main():
     print("RUNNING BENCHMARKS...")
     benchmark()
     print("-" * 70)
-    print("RUNNING STOCHASTIC PRIVACY TESTING...")
+    print("RUNNING STOCHASTIC PRIVACY TESTS...")
     test_privacy()
 
 
