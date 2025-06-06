@@ -51,7 +51,8 @@ def misra_gries_with_groups(stream, sketch_size):
     decrement_count = 0
     first_group = SketchGroup(0)
     first_group.elements = SortedList(range(-sketch_size, 0))
-    sketch = {key: SketchElement(first_group) for key in range(-sketch_size, 0)}
+    sketch = {key: SketchElement(first_group)
+              for key in range(-sketch_size, 0)}
 
     for key in stream:
         if key < 0:
@@ -59,8 +60,9 @@ def misra_gries_with_groups(stream, sketch_size):
         element_count += 1
         if key in sketch:
             element = sketch[key]
-            if len(element.group.elements) == 1 and (not element.group.next
-                                                     or element.group.next.count_diff > 1):
+            if (len(element.group.elements) == 1
+                and (not element.group.next
+                     or element.group.next.count_diff > 1)):
                 element.group.count_diff += 1
                 if element.group.next:
                     element.group.next.count_diff -= 1
@@ -73,7 +75,8 @@ def misra_gries_with_groups(stream, sketch_size):
                         element.group.next.prev = element.group.prev
                 if element.group.next and element.group.next.count_diff == 1:
                     if len(element.group.elements) == 0:
-                        element.group.next.count_diff += element.group.count_diff
+                        element.group.next.count_diff += (
+                            element.group.count_diff)
                     element.group = element.group.next
                 else:
                     new_group = SketchGroup(1)
