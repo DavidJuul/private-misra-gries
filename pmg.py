@@ -175,9 +175,8 @@ def purely_privatize_misra_gries(sketch: dict[int, int],
     offset = (decrement_count - math.floor(element_count / (sketch_size + 1))
               if offset_counters else 0)
     threshold = math.ceil(
-        math.log((1 + math.exp(-epsilon / sensitivity)) * sketch_size
-                 / universe_size)
-        / math.log(math.exp(-epsilon / sensitivity)))
+        - sensitivity * math.log((math.exp(-epsilon / sensitivity) + 1)
+                                 * sketch_size / universe_size) / epsilon)
     geometric = create_geometric(epsilon, sensitivity)
     two_sided_geometric = create_two_sided_geometric(epsilon, sensitivity)
 
