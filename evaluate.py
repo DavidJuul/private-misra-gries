@@ -358,12 +358,68 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     plt.legend(loc="upper right")
 
 
+def plot_accuracy(title, label, repetitions, function, input_lengths,
+                 input_generator, inaccuracy_generator = None):
+    print_label = ": {}".format(label) if label else ""
+    print("Testing {}{}...".format(title, print_label))
+    inaccuracies = []
+    if inaccuracy_generator:
+        beta = 0.05
+        accuracy_deviations = 0
+        max_deviations = 0
+        total_inaccuracy = 0
+        total_max_inaccuracy = 0
+    for input_length in input_lengths:
+        input_ = input_generator(input_length)
+        sketch = input_[0]
+        if inaccuracy_generator:
+            min_inaccuracy, max_inaccuracy = inaccuracy_generator(input_length,
+                                                                  beta = beta)
+        inaccuracy = 0
+        for _ in range(repetitions):
+            private_sketch = function(*input_)
+            for key in sketch:
+                if key not in private_sketch:
+                    private_sketch[key] = 0
+            if inaccuracy_generator:
+                max_deviations += len(private_sketch)
+                total_max_inaccuracy += max_inaccuracy * len(private_sketch)
+            for key in private_sketch:
+                if key not in sketch:
+                    sketch[key] = 0
+                error = private_sketch[key] - sketch[key]
+                inaccuracy += abs(error)
+                if inaccuracy_generator:
+                    if error < min_inaccuracy:
+                        accuracy_deviations += 1
+                    if error > max_inaccuracy:
+                        accuracy_deviations += 1
+        inaccuracy /= repetitions
+        inaccuracies.append(inaccuracy)
+        if inaccuracy_generator:
+            total_inaccuracy += inaccuracy
+    if inaccuracy_generator:
+        deviation_ratio = accuracy_deviations / max_deviations
+        print("{}{} had {}/{}={}{}beta accuracy deviations.".format(
+            title, print_label, accuracy_deviations, max_deviations,
+            deviation_ratio, "<" if deviation_ratio < beta else ">"))
+        print("{}{} had total inaccuracy {}{}{} max expected inaccuracy."
+              "".format(
+                  title, print_label, total_inaccuracy,
+                  "<" if total_inaccuracy <= total_max_inaccuracy else ">",
+                  total_max_inaccuracy))
+
+    plt.plot(input_lengths, inaccuracies, label=label, marker=".")
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+
+
 def wilson_interval(occurrences, experiments, alpha = 0.01):
     proportion = occurrences / experiments
     critical = scipy.stats.norm.ppf(1 - alpha / 2)
     denominator = 1 + critical ** 2 / experiments
     center = proportion + critical ** 2 / (2 * experiments)
-    margin = critical * math.sqrt(proportion * (1 - proportion) / experiments + critical ** 2 / (4 * experiments ** 2))
+    margin = critical * math.sqrt(proportion * (1 - proportion) / experiments
+                                  + critical ** 2 / (4 * experiments ** 2))
     lower = (center - margin) / denominator
     upper = (center + margin) / denominator
     return lower, upper
@@ -824,6 +880,150 @@ def test_privacy_purely_privatize_user_level():
     plt.savefig("privacy_purely_privatize_user_level_keys.png")
 
 
+def test_accuracy_privatize():
+    repetitions = 10
+    epsilon = 1
+    delta = 1e-6
+    # sketch_sizes = [10 * 2 ** i for i in range(14)]
+    sketch_sizes = [10 * 2 ** i for i in range(8)]
+
+    def input_generator(sketch_size):
+        return {i: i % 50 for i in range(sketch_size)}, epsilon, delta
+    def inaccuracy_generator(sketch_size, beta):
+        max_inaccuracy = math.log((sketch_size + 1) * math.exp(epsilon)
+                                  / ((math.exp(epsilon) + 1) * beta)) / epsilon
+        min_inaccuracy = (- max_inaccuracy - 1
+                          - 2 * math.log(6 * math.exp(epsilon)
+                                         / ((math.exp(epsilon) + 1) * delta))
+                          / epsilon)
+        return min_inaccuracy, max_inaccuracy
+    plt.clf()
+    title = "Accuracy of approximate privatization"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Total inaccuracy")
+    with unittest.mock.patch("pmg.find_threshold",
+                             new=pmg_alternatives.find_threshold_original):
+        plot_accuracy(title, "Original threshold", repetitions,
+                      pmg.privatize_misra_gries, sketch_sizes, input_generator,
+                      inaccuracy_generator)
+    plot_accuracy(title, "Final", repetitions, pmg.privatize_misra_gries,
+                  sketch_sizes, input_generator, inaccuracy_generator)
+    plt.legend(loc="upper right")
+    plt.savefig("accuracy_privatize.png")
+
+
+def test_accuracy_purely_privatize():
+    repetitions = 10
+    epsilon = 1
+    # sketch_sizes = [10 * 2 ** i for i in range(14)]
+    sketch_sizes = [10 * 2 ** i for i in range(8)]
+    universe_size = sketch_sizes[-1] * 10
+    decrement_count = 0
+
+    def input_generator(sketch_size):
+        return ({i: i for i in range(sketch_size)}, sketch_size, epsilon,
+                universe_size, sketch_size, decrement_count)
+    plt.clf()
+    title = "Accuracy of pure privatization"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Total inaccuracy")
+    plot_accuracy(title, "", repetitions, pmg.purely_privatize_misra_gries,
+                  sketch_sizes, input_generator)
+    plt.savefig("accuracy_purely_privatize.png")
+
+
+def test_accuracy_privatize_merged():
+    repetitions = 10
+    epsilon = 1
+    delta = 1e-6
+    # sketch_sizes = [10 * 2 ** i for i in range(8)]
+    sketch_sizes = [10 * 2 ** i for i in range(6)]
+
+    def input_generator(sketch_size):
+        return ({i: i * 100 for i in range(sketch_size)}, sketch_size, epsilon,
+                delta)
+    plt.clf()
+    title = "Accuracy of approximate privatization of merged"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Total inaccuracy")
+    with unittest.mock.patch("pmg.find_threshold",
+                             new=pmg_alternatives.find_threshold_original):
+        plot_accuracy(title, "Original threshold", repetitions,
+                      pmg.privatize_merged, sketch_sizes, input_generator)
+    plot_accuracy(title, "", repetitions, pmg.privatize_merged,
+                  sketch_sizes, input_generator)
+    plt.legend(loc="upper right")
+    plt.savefig("accuracy_privatize_merged.png")
+
+
+def test_accuracy_purely_privatize_merged():
+    repetitions = 10
+    epsilon = 1
+    # sketch_sizes = [10 * 2 ** i for i in range(12)]
+    sketch_sizes = [10 * 2 ** i for i in range(8)]
+    universe_size = sketch_sizes[-1] * 10
+
+    def input_generator(sketch_size):
+        return ({i: i for i in range(sketch_size)}, sketch_size, epsilon,
+                universe_size)
+    plt.clf()
+    title = "Accuracy of pure privatization of merged"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Total inaccuracy")
+    plot_accuracy(title, "", repetitions, pmg.purely_privatize_merged,
+                  sketch_sizes, input_generator)
+    plt.savefig("accuracy_purely_privatize_merged.png")
+
+
+def test_accuracy_privatize_user_level():
+    repetitions = 10
+    epsilon = 1
+    delta = 1e-6
+    # sketch_sizes = [10 * 2 ** i for i in range(14)]
+    sketch_sizes = [10 * 2 ** i for i in range(8)]
+    user_element_count = 5
+
+    def input_generator(sketch_size):
+        return ({i: i for i in range(sketch_size)}, epsilon, delta,
+                user_element_count)
+    plt.clf()
+    title = "Accuracy of user-level approximate privatization"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Total inaccuracy")
+    plot_accuracy(title, "", repetitions, pmg.privatize_user_level,
+                  sketch_sizes, input_generator)
+    plt.savefig("accuracy_privatize_user_level.png")
+
+
+def test_accuracy_purely_privatize_user_level():
+    repetitions = 10
+    epsilon = 1
+    # sketch_sizes = [10 * 2 ** i for i in range(14)]
+    sketch_sizes = [10 * 2 ** i for i in range(8)]
+    universe_size = sketch_sizes[-1] * 10
+    decrement_count = 0
+    user_element_count = 5
+
+    def input_generator(sketch_size):
+        return ({i: i for i in range(sketch_size)}, sketch_size, epsilon,
+                universe_size, sum(range(sketch_size)), decrement_count,
+                user_element_count)
+
+    plt.clf()
+    title = "Accuracy of user-level pure privatization"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Total inaccuracy")
+    plot_accuracy(title, "", repetitions, pmg.purely_privatize_user_level,
+                  sketch_sizes, input_generator)
+    plt.savefig("accuracy_purely_privatize_user_level.png")
+
+
 def test():
     """Run the unit tests."""
     unittest.main(verbosity=2, exit=False)
@@ -849,6 +1049,16 @@ def test_privacy():
     test_privacy_purely_privatize_user_level()
 
 
+def test_accuracy():
+    """Run the accuracy tests."""
+    test_accuracy_privatize()
+    test_accuracy_purely_privatize()
+    test_accuracy_privatize_merged()
+    test_accuracy_purely_privatize_merged()
+    test_accuracy_privatize_user_level()
+    test_accuracy_purely_privatize_user_level()
+
+
 def main():
     """Run the evaluation of the private Misra-Gries sketching program."""
     print("RUNNING UNIT TESTS...")
@@ -859,6 +1069,9 @@ def main():
     print("-" * 70)
     print("RUNNING STOCHASTIC PRIVACY TESTS...")
     test_privacy()
+    print("-" * 70)
+    print("RUNNING ACCURACY TESTS...")
+    test_accuracy()
 
 
 if __name__ == "__main__":
