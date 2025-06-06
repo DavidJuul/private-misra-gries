@@ -480,30 +480,50 @@ def benchmark_privatize():
 
 def benchmark_purely_privatize():
     repetitions = 10
-    sketch_size = 100
-    sketch = {i: i for i in range(sketch_size)}
+    sketch_sizes = [10 * 2 ** i for i in range(10)]
+    # sketch_sizes = [10 * 2 ** i for i in range(6)]
     epsilon = 1
-    # universe_sizes = [int(sketch_size * 2 ** i) for i in range(2, 14)]
-    universe_sizes = [int(sketch_size * 2 ** i) for i in range(2, 8)]
+    universe_size = sketch_sizes[-1] * 10
     decrement_count = 0
 
-    def input_generator(universe_size):
+    def input_generator(sketch_size):
+        return ({i: i for i in range(sketch_size)}, sketch_size, epsilon,
+                universe_size, sketch_size, decrement_count)
+    plt.clf()
+    title = "Misra-Gries pure privatization (sketch size)"
+    plt.title(title)
+    plt.xlabel("Sketch size")
+    plt.ylabel("Execution time [s]")
+    plot_benchmark(title, "Unoptimized version", repetitions,
+                   pmg_alternatives.purely_privatize_misra_gries_unoptimized,
+                   sketch_sizes, input_generator)
+    plot_benchmark(title, "Optimized version (final)", repetitions,
+                   pmg.purely_privatize_misra_gries, sketch_sizes,
+                   input_generator)
+    plt.legend(loc="upper right")
+    plt.savefig("benchmark_purely_privatize_sketch.png")
+
+    sketch_size = 100
+    sketch = {i: i for i in range(sketch_size)}
+    # universe_sizes = [int(sketch_size * 2 ** i) for i in range(2, 14)]
+    universe_sizes = [int(sketch_size * 2 ** i) for i in range(2, 8)]
+    def input_generator2(universe_size):
         element_count = sketch_size
         return (sketch, sketch_size, epsilon, universe_size, element_count,
                 decrement_count)
     plt.clf()
-    title = "Misra-Gries pure privatization"
+    title = "Misra-Gries pure privatization (universe size)"
     plt.title(title)
     plt.xlabel("Universe size")
     plt.ylabel("Execution time [s]")
     plot_benchmark(title, "Unoptimized version", repetitions,
                    pmg_alternatives.purely_privatize_misra_gries_unoptimized,
-                   universe_sizes, input_generator)
+                   universe_sizes, input_generator2)
     plot_benchmark(title, "Optimized version (final)", repetitions,
                    pmg.purely_privatize_misra_gries, universe_sizes,
-                   input_generator)
+                   input_generator2)
     plt.legend(loc="upper right")
-    plt.savefig("benchmark_purely_privatize.png")
+    plt.savefig("benchmark_purely_privatize_universe.png")
 
 
 def benchmark_merge():
