@@ -359,7 +359,7 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
 
 
 def plot_accuracy(title, label, repetitions, function, input_lengths,
-                 input_generator, inaccuracy_generator = None):
+                 input_generator, inaccuracy_generator = None, sci_y = True):
     print_label = ": {}".format(label) if label else ""
     print("Testing {}{}...".format(title, print_label))
     inaccuracies = []
@@ -410,7 +410,8 @@ def plot_accuracy(title, label, repetitions, function, input_lengths,
                   total_max_inaccuracy))
 
     plt.plot(input_lengths, inaccuracies, label=label, marker=".")
-    plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+    if sci_y:
+        plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
 
 
 def wilson_interval(occurrences, experiments, alpha = 0.01):
@@ -933,6 +934,24 @@ def test_accuracy_purely_privatize():
                   sketch_sizes, input_generator)
     plt.savefig("accuracy_purely_privatize.png")
 
+    sketch = {i: i for i in range(100)}
+    sketch_size = len(sketch)
+    universe_sizes = [sketch_size * 4 * 2 ** i for i in range(14)]
+    # universe_sizes = [sketch_size * 4 * 2 ** i for i in range(8)]
+    def input_generator2(universe_size):
+        return (sketch, sketch_size, epsilon, universe_size, sketch_size,
+                decrement_count)
+    plt.clf()
+    title = "Accuracy of pure privatization (universe size)"
+    plt.title(title)
+    plt.xlabel("Universe size")
+    plt.xscale("log")
+    plt.ylabel("Total inaccuracy")
+    plt.yscale("log")
+    plot_accuracy(title, "", repetitions, pmg.purely_privatize_misra_gries,
+                  universe_sizes, input_generator2, sci_y=False)
+    plt.savefig("accuracy_purely_privatize_universe.png")
+
 
 def test_accuracy_privatize_merged():
     repetitions = 10
@@ -978,6 +997,23 @@ def test_accuracy_purely_privatize_merged():
                   sketch_sizes, input_generator)
     plt.savefig("accuracy_purely_privatize_merged.png")
 
+    sketch = {i: i for i in range(100)}
+    sketch_size = len(sketch)
+    universe_sizes = [sketch_size * 4 * 2 ** i for i in range(14)]
+    # universe_sizes = [sketch_size * 4 * 2 ** i for i in range(8)]
+    def input_generator2(universe_size):
+        return (sketch, sketch_size, epsilon, universe_size)
+    plt.clf()
+    title = "Accuracy of pure privatization of merged (universe size)"
+    plt.title(title)
+    plt.xlabel("Universe size")
+    plt.xscale("log")
+    plt.ylabel("Total inaccuracy")
+    plt.yscale("log")
+    plot_accuracy(title, "", repetitions, pmg.purely_privatize_merged,
+                  universe_sizes, input_generator2, sci_y=False)
+    plt.savefig("accuracy_purely_privatize_merged_universe.png")
+
 
 def test_accuracy_privatize_user_level():
     repetitions = 10
@@ -1022,6 +1058,25 @@ def test_accuracy_purely_privatize_user_level():
     plot_accuracy(title, "", repetitions, pmg.purely_privatize_user_level,
                   sketch_sizes, input_generator)
     plt.savefig("accuracy_purely_privatize_user_level.png")
+
+    sketch = {i: i for i in range(100)}
+    sketch_size = len(sketch)
+    element_count = sum(range(sketch_size))
+    universe_sizes = [sketch_size * 4 * 2 ** i for i in range(14)]
+    # universe_sizes = [sketch_size * 4 * 2 ** i for i in range(8)]
+    def input_generator2(universe_size):
+        return (sketch, sketch_size, epsilon, universe_size, element_count,
+                decrement_count, user_element_count)
+    plt.clf()
+    title = "Accuracy of user-level pure privatization (universe size)"
+    plt.title(title)
+    plt.xlabel("Universe size")
+    plt.xscale("log")
+    plt.ylabel("Total inaccuracy")
+    plt.yscale("log")
+    plot_accuracy(title, "", repetitions, pmg.purely_privatize_user_level,
+                  universe_sizes, input_generator2, sci_y=False)
+    plt.savefig("accuracy_purely_privatize_user_level_universe.png")
 
 
 def test():
