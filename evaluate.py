@@ -308,13 +308,13 @@ def plot_privatization_distribution(title, repetitions, function, sketch,
     print("{} had {} Wilson-based privacy violations.".format(
         title, wilson_violations))
     if count_sums:
-        total_sum_ratio = counter_sum / neighbor_counter_sum
+        total_sum_ratio = max(counter_sum, 1) / max(neighbor_counter_sum, 1)
         print("{} had total sum ratio {}/{}{}e^epsilon.".format(
             title, counter_sum, neighbor_counter_sum,
             "<" if total_sum_ratio <= e_epsilon
             and 1 / total_sum_ratio <= e_epsilon else ">"
         ))
-    original_first_release_ratio = (original_first_releases
+    original_first_release_ratio = (max(original_first_releases, 1)
                                     / max(neighbor_original_first_releases, 1))
     print("{} had {}/{}{}e^epsilon accurate releases of the first counter."
           "".format(
