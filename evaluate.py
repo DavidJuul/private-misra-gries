@@ -534,7 +534,7 @@ def benchmark_find_threshold():
     def input_generator(epsilon):
         return epsilon, delta
     plt.clf()
-    title = "Finding thresholds"
+    title = "Finding thresholds (epsilon)"
     plt.title(title)
     plt.xlabel("Epsilon")
     plt.xscale("log")
@@ -542,7 +542,22 @@ def benchmark_find_threshold():
     plt.yscale("log")
     plot_benchmark(title, "", repetitions, pmg.find_threshold, epsilons,
                    input_generator)
-    plt.savefig("benchmark_find_threshold.png")
+    plt.savefig("benchmark_find_threshold_epsilon.png")
+
+    epsilon = 1
+    deltas = [1 / 100 ** i for i in range(24)]
+    def input_generator2(delta):
+        return epsilon, delta
+    plt.clf()
+    title = "Finding thresholds (delta)"
+    plt.title(title)
+    plt.xlabel("Delta")
+    plt.xscale("log")
+    plt.ylabel("Execution time [s]")
+    plt.ticklabel_format(axis="y", style="sci", scilimits=(0, 0))
+    plot_benchmark(title, "", repetitions, pmg.find_threshold, deltas,
+                   input_generator2)
+    plt.savefig("benchmark_find_threshold_delta.png")
 
 
 def test_privacy_privatize():
