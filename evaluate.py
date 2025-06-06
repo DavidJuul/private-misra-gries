@@ -826,7 +826,7 @@ def test_privacy_privatize_user_level():
     # repetitions = 10000
     repetitions = 1000
     sketch = {0: 60, 1: 30}
-    neighbor_sketch = {0: 57, 1: 29}
+    neighbor_sketch = {0: 58, 1: 29}
     epsilon = 1
     delta = 1 / (sum(sketch.values()) - 1 + 9) / 10
     user_element_count = sum(sketch.values()) - sum(neighbor_sketch.values())
@@ -851,7 +851,7 @@ def test_privacy_purely_privatize_user_level():
     # repetitions = 20000
     repetitions = 2000
     sketch = {0: 60, 1: 30}
-    neighbor_sketch = {0: 57, 1: 29}
+    neighbor_sketch = {0: 58, 1: 29}
     sketch_size = len(sketch)
     epsilon = 2
     delta = 0
