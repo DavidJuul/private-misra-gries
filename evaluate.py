@@ -803,7 +803,7 @@ def test_privacy_purely_privatize_merged():
     merged_size = len(merged)
     epsilon = 2
     delta = 0
-    universe_size = 12
+    universe_size = 13
 
     def input_generator(merged):
         return merged, merged_size, epsilon, universe_size
@@ -953,7 +953,7 @@ def test_accuracy_privatize_merged():
                              new=pmg_alternatives.find_threshold_original):
         plot_accuracy(title, "Original threshold", repetitions,
                       pmg.privatize_merged, sketch_sizes, input_generator)
-    plot_accuracy(title, "", repetitions, pmg.privatize_merged,
+    plot_accuracy(title, "Final", repetitions, pmg.privatize_merged,
                   sketch_sizes, input_generator)
     plt.legend(loc="upper right")
     plt.savefig("accuracy_privatize_merged.png")
