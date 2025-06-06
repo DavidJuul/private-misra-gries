@@ -10,6 +10,7 @@ different iterations of the module, and stochastic testing of the privacy.
 import json
 import math
 import random
+import tempfile
 import time
 import unittest
 import unittest.mock
@@ -201,7 +202,13 @@ class TestMerge(unittest.TestCase):
             {4: 1, 5: 2, 6: 5},
         ]
         for sketches, expected_merged in zip(sketch_groups, expected_merges):
-            merged = pmg.merge(sketches, sketch_size)
+            sketch_files = []
+            for sketch in sketches:
+                sketch_file = tempfile.NamedTemporaryFile().name
+                with open(sketch_file, "w", encoding="utf8") as file:
+                    json.dump(sketch, file)
+                sketch_files.append(sketch_file)
+            merged = pmg.merge(sketch_files, sketch_size)
             self.assertDictEqual(merged, expected_merged)
 
 
@@ -528,13 +535,18 @@ def benchmark_purely_privatize():
 
 def benchmark_merge():
     repetitions = 10
-    # sketch_sizes = [10 * 2 ** i for i in range(16)]
-    sketch_sizes = [10 * 2 ** i for i in range(14)]
+    # sketch_sizes = [10 * 2 ** i for i in range(14)]
+    sketch_sizes = [10 * 2 ** i for i in range(10)]
 
+    sketch_file1 = tempfile.NamedTemporaryFile()
+    sketch_file2 = tempfile.NamedTemporaryFile()
     def input_generator(sketch_size):
-        return ([{i: i for i in range(sketch_size)},
-                 {i: i for i in range(sketch_size, sketch_size * 2)}],
-                sketch_size)
+        with open(sketch_file1.name, "w", encoding="utf8") as file:
+            json.dump({i: i for i in range(sketch_size)}, file)
+        with open(sketch_file2.name, "w", encoding="utf8") as file:
+            json.dump({i: i for i in range(sketch_size, sketch_size * 2)},
+                      file)
+        return [sketch_file1.name, sketch_file2.name], sketch_size
     plt.clf()
     title = "Misra-Gries merging"
     plt.title(title)

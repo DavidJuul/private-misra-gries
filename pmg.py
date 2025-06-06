@@ -205,23 +205,28 @@ def purely_privatize_misra_gries(sketch: dict[int, int],
     return private_sketch
 
 
-def merge(sketches: Sequence[dict[int, int]],
+def merge(sketch_files: Sequence[str],
           sketch_size: int,
           ) -> dict[int, int]:
-    """Calculate the merged Misra-Gries sketch from the given sketches.
+    """Calculate the merged Misra-Gries sketch from the given sketch files.
 
     The merged sketch will at most be of the given size, but the given sketches
     can be of any size.
 
     Args:
-        sketch: A sequence of Misra-Gries sketches to merge.
+        sketch: A sequence of Misra-Gries sketch JSON files to merge.
         sketch_size: The maximum size of the merged sketch.
 
     Returns:
         The merged Misra-Gries sketch."
     """
-    merged = sketches[0]
-    for sketch in sketches[1:]:
+    def load_sketch(sketch_file: str) -> dict[int, int]:
+        with open(sketch_file, encoding="utf8") as input_:
+                return ({int(key): counter for key, counter
+                         in json.load(input_).items()})
+
+    merged = load_sketch(sketch_files[0])
+    for sketch in map(load_sketch, sketch_files[1:]):
         summed_sketch = merged
         for key in sketch:
             if key in summed_sketch:
@@ -517,11 +522,11 @@ def create_sketch() -> None:
 def merge_sketches() -> None:
     """Merge Misra-Gries sketches according to the command-line arguments.
 
-    The merged sketch is created by first reading into memory all the sketches
-    from JSON files that were given as command-line arguments. The merged
-    sketch will at most be of the given size, but the given sketches can be of
-    any size. If the delta argument is 0, the functions for purely privatizing
-    the merged sketch are used, and otherwise it is approximately privatized.
+    The merged sketch is created by reading all the sketches from JSON files
+    that were given as command-line arguments one at a time. The merged sketch
+    will at most be of the given size, but the given sketches can be of any
+    size. If the delta argument is 0, the functions for purely privatizing the
+    merged sketch are used, and otherwise it is approximately privatized.
     """
     sketch_size = int(sys.argv[2])
     epsilon = float(sys.argv[3])
@@ -533,12 +538,7 @@ def merge_sketches() -> None:
         sketch_files = sys.argv[6:]
 
     # Merge the sketches from the files.
-    sketches = []
-    for file in sketch_files:
-        with open(file, encoding="utf8") as input_:
-            sketches.append({int(key): counter for key, counter
-                             in json.load(input_).items()})
-    merged = merge(sketches, sketch_size)
+    merged = merge(sketch_files, sketch_size)
 
     # Privatize the merged sketch.
     if delta > 0:
