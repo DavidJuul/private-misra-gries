@@ -676,7 +676,7 @@ def test_privacy_privatize():
         epsilon, delta, input_generator)
     plt.savefig("privacy_privatize.png")
 
-    title = "Privacy of approximate privatization with original threshold"
+    title = "Privacy of approximate privatization with loose threshold"
     with unittest.mock.patch("pmg.find_threshold",
                              new=pmg_alternatives.find_threshold_original):
         plot_privatization_distribution(
@@ -786,7 +786,7 @@ def test_privacy_privatize_merged():
         epsilon, delta, input_generator)
     plt.savefig("privacy_privatize_merged.png")
 
-    title = ("Privacy of approximate privatization of merged with original "
+    title = ("Privacy of approximate privatization of merged with loose "
              "threshold")
     with unittest.mock.patch("pmg.find_threshold",
                              new=pmg_alternatives.find_threshold_original):
@@ -905,11 +905,12 @@ def test_accuracy_privatize():
     plt.ylabel("Total inaccuracy")
     with unittest.mock.patch("pmg.find_threshold",
                              new=pmg_alternatives.find_threshold_original):
-        plot_accuracy(title, "Original threshold", repetitions,
+        plot_accuracy(title, "Loose threshold", repetitions,
                       pmg.privatize_misra_gries, sketch_sizes, input_generator,
                       inaccuracy_generator)
-    plot_accuracy(title, "Final", repetitions, pmg.privatize_misra_gries,
-                  sketch_sizes, input_generator, inaccuracy_generator)
+    plot_accuracy(title, "Numerical threshold (final)", repetitions,
+                  pmg.privatize_misra_gries, sketch_sizes, input_generator,
+                  inaccuracy_generator)
     plt.legend(loc="upper right")
     plt.savefig("accuracy_privatize.png")
 
@@ -970,10 +971,10 @@ def test_accuracy_privatize_merged():
     plt.ylabel("Total inaccuracy")
     with unittest.mock.patch("pmg.find_threshold",
                              new=pmg_alternatives.find_threshold_original):
-        plot_accuracy(title, "Original threshold", repetitions,
+        plot_accuracy(title, "Loose threshold", repetitions,
                       pmg.privatize_merged, sketch_sizes, input_generator)
-    plot_accuracy(title, "Final", repetitions, pmg.privatize_merged,
-                  sketch_sizes, input_generator)
+    plot_accuracy(title, "Numerical threshold (final)", repetitions,
+                  pmg.privatize_merged, sketch_sizes, input_generator)
     plt.legend(loc="upper right")
     plt.savefig("accuracy_privatize_merged.png")
 
