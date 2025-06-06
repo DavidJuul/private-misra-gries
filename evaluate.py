@@ -479,11 +479,10 @@ def benchmark_privatize():
     plt.title(title)
     plt.xlabel("Sketch size")
     plt.ylabel("Execution time [s]")
-    default_random = pmg.RANDOM
-    pmg.random = random.Random()
-    plot_benchmark(title, "Pseudo-random sampling", repetitions,
-                   pmg.privatize_misra_gries, sketch_sizes, input_generator)
-    pmg.random = default_random
+    with unittest.mock.patch("pmg.random", new=random.Random()):
+        plot_benchmark(title, "Pseudo-random sampling", repetitions,
+                       pmg.privatize_misra_gries, sketch_sizes,
+                       input_generator)
     plot_benchmark(title, "Cryptographic sampling (final)", repetitions,
                    pmg.privatize_misra_gries, sketch_sizes, input_generator)
     plt.legend(loc="upper right")
