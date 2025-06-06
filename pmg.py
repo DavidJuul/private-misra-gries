@@ -619,7 +619,7 @@ def main() -> None:
               "<user element count> <stream file>")
         print("  Create a user-level (epsilon, 0)-private sketch:")
         print(f"    {sys.argv[0]} userlevel <sketch size> <epsilon> 0 "
-              "<user element count> <universe size> <sketch file>")
+              "<user element count> <universe size> <stream file>")
         return
 
     match sys.argv[1]:
