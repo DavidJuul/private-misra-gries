@@ -208,8 +208,13 @@ class TestMerge(unittest.TestCase):
                 with open(sketch_file, "w", encoding="utf8") as file:
                     json.dump(sketch, file)
                 sketch_files.append(sketch_file)
-            merged = pmg.merge(sketch_files, sketch_size)
-            self.assertDictEqual(merged, expected_merged)
+            merged_quickselect = pmg.merge(sketch_files, sketch_size)
+            self.assertDictEqual(merged_quickselect, expected_merged)
+            with unittest.mock.patch(
+                "pmg.find_kth_largest",
+                new=pmg_alternatives.find_kth_largest_quickselect):
+                merged_quickselect = pmg.merge(sketch_files, sketch_size)
+                self.assertDictEqual(merged_quickselect, expected_merged)
 
 
 def plot_benchmark(title, label, repetitions, function, input_lengths,
@@ -552,8 +557,15 @@ def benchmark_merge():
     plt.title(title)
     plt.xlabel("Sketch size")
     plt.ylabel("Execution time [s]")
-    plot_benchmark(title, "", repetitions, pmg.merge, sketch_sizes,
-                   input_generator)
+
+    with unittest.mock.patch(
+        "pmg.find_kth_largest",
+        new=pmg_alternatives.find_kth_largest_quickselect):
+        plot_benchmark(title, "Quickselect", repetitions, pmg.merge,
+                       sketch_sizes, input_generator)
+    plot_benchmark(title, "Sorting (final version)", repetitions, pmg.merge,
+                   sketch_sizes, input_generator)
+    plt.legend(loc="upper right")
     plt.savefig("benchmark_merge.png")
 
 

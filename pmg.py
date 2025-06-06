@@ -236,8 +236,8 @@ def merge(sketch_files: Sequence[str],
 
         if len(summed_sketch) > sketch_size:
             merged = {}
-            offset = sorted(summed_sketch.items(),
-                            key=lambda item: item[1])[-(sketch_size + 1)][1]
+            offset = find_kth_largest(list(summed_sketch.values()),
+                                      sketch_size + 1)
             for key in summed_sketch:
                 if summed_sketch[key] > offset:
                     merged[key] = summed_sketch[key] - offset
@@ -476,6 +476,21 @@ def find_threshold(epsilon: float,
 
     # Add 1 to account for the actual count of the unique keys.
     return threshold + 1
+
+
+def find_kth_largest(items: Iterable[int], k: int) -> int:
+    """Return the kth largest element in items.
+
+    The items are simply sorted since this proved to be faster in practice.
+
+    Args:
+        items: The items to find the kth largest element from.
+        k: The index of the element to return when the items are sorted.
+
+    Returns:
+        The kth largest element in items.
+    """
+    return sorted(items)[-k]
 
 
 def create_sketch() -> None:

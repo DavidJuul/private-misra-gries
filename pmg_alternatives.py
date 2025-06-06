@@ -177,3 +177,28 @@ def find_threshold_original(epsilon, delta, sensitivity, max_unique_keys = 2):
                             * math.exp(epsilon / sensitivity)
                             / ((math.exp(epsilon / sensitivity) + 1) * delta))
                  / epsilon))
+
+
+def find_kth_largest_quickselect(items, k):
+    def partition(items, left, right):
+        pivot = random.randint(left, right)
+        items[right], items[pivot], = items[pivot], items[right]
+        pivot_value = items[right]
+        i = left
+        for j in range(left, right):
+            if items[j] <= pivot_value:
+                items[i], items[j] = items[j], items[i]
+                i += 1
+        items[i], items[right] = items[right], items[i]
+        return i
+
+    def quickselect(items, left, right, k):
+        if k > 0 and k <= right - left + 1:
+            index = partition(items, left, right)
+            if (index - left == k - 1):
+                return items[index]
+            if (index - left > k - 1):
+                return quickselect(items, left, index - 1, k)
+            return quickselect(items, index + 1, right, k - index + left - 1)
+
+    return quickselect(items, 0, len(items) - 1, len(items) - k + 1)
