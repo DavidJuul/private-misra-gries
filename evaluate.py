@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Evaluation of differentially private Misra-Gries in practice.
+"""Evaluation of Differentially Private Misra-Gries in Practice.
 
-This module evaluates everything in the "differentially private Misra-Gries in
-practice" module (pmg.py). It performs unit tests where possible, benchmarks of
+This module evaluates everything in the "Differentially Private Misra-Gries in
+Practice" module (pmg.py). It performs unit tests where possible, benchmarks of
 different iterations of the module, and stochastic testing of the privacy.
 """
 

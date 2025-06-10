@@ -1,7 +1,7 @@
-"""Alternative versions of differentially private Misra-Gries in practice.
+"""Alternative versions of Differentially Private Misra-Gries in Practice.
 
 These are older alternative implementations of some of the functions in the
-"differentially private Misra-Gries in practice" module (pmg.py).
+"Differentially Private Misra-Gries in Practice" module (pmg.py).
 """
 
 

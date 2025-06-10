@@ -1,4 +1,4 @@
-# Differentially private Misra-Gries in practice
+# Differentially Private Misra-Gries in Practice
 
 This project implements algorithms for creating Misra-Gries sketching, merging sketches, and for approximately and purely privatizing the sketches under differential privacy. This was done for a Bachelor's Project in Computer Science at the University of Copenhagen.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Differentially private Misra-Gries in practice.
+"""Differentially Private Misra-Gries in Practice.
 
 This module allows creating and merging differentially private Misra-Gries
 sketches. It can be run from the command-line with the relevant arguments that
@@ -615,7 +615,7 @@ def main() -> None:
     Misra-Gries sketches are called.
     """
     if len(sys.argv) < 5:
-        print("Differentially private Misra-Gries in practice")
+        print("Differentially Private Misra-Gries in Practice")
         print("Usage:")
         print("  Create an (epsilon, delta)-private sketch:")
         print(f"    {sys.argv[0]} <sketch size> <epsilon> <delta> "
