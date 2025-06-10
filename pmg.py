@@ -336,8 +336,8 @@ def purely_privatize_user_level(sketch: dict[int, int],
     """User-level purely privatize the given Misra-Gries sketch.
 
     The sketch should consist of integer keys >= 0 and < universe_size. This
-    simply uses the purely_privatize_misra_gries() function with a higher
-    global sensitivity.
+    simply uses the purely_privatize_misra_gries() function with a scaled
+    epsilon value.
 
     Args:
         sketch: The Misra-Gries sketch to privatize.
